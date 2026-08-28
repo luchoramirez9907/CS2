@@ -1,0 +1,113 @@
+[INFO] Scanning for projects...
+[INFO] 
+[INFO] --------------------------< CS2:nexusmarket >---------------------------
+[INFO] Building  0.0.1-SNAPSHOT
+[INFO]   from pom.xml
+[INFO] --------------------------------[ jar ]---------------------------------
+[INFO] 
+[INFO] --- resources:3.5.0:resources (default-resources) @ nexusmarket ---
+[INFO] Copying 1 resource from src\main\resources to target\classes
+[INFO] Copying 0 resource from src\main\resources to target\classes
+[INFO] 
+[INFO] --- compiler:3.15.0:compile (default-compile) @ nexusmarket ---
+[INFO] Recompiling the module because of changed source code.
+[INFO] Compiling 147 source files with javac [debug parameters release 17] to target\classes
+[INFO] -------------------------------------------------------------
+[ERROR] COMPILATION ERROR : 
+[INFO] -------------------------------------------------------------
+[ERROR] /C:/Users/Luisv/OneDrive/Desktop/CS2/nexusmarket/nexusmarketII/src/main/java/Application/adapters/out/persistence/mongodb/repositories/InventoryMovementMongoRepository.java:[4,51] package org.springframework.data.mongodb.repository does not exist
+[ERROR] /C:/Users/Luisv/OneDrive/Desktop/CS2/nexusmarket/nexusmarketII/src/main/java/Application/adapters/out/persistence/mongodb/repositories/InventoryMovementMongoRepository.java:[9,59] cannot find symbol
+  symbol: class MongoRepository
+[ERROR] /C:/Users/Luisv/OneDrive/Desktop/CS2/nexusmarket/nexusmarketII/src/main/java/Application/adapters/out/persistence/mongodb/documents/InventoryMovementDocument.java:[4,53] package org.springframework.data.mongodb.core.mapping does not exist
+[ERROR] /C:/Users/Luisv/OneDrive/Desktop/CS2/nexusmarket/nexusmarketII/src/main/java/Application/adapters/out/persistence/mongodb/documents/InventoryMovementDocument.java:[12,2] cannot find symbol
+  symbol: class Document
+[ERROR] /C:/Users/Luisv/OneDrive/Desktop/CS2/nexusmarket/nexusmarketII/src/main/java/Application/adapters/out/persistence/mongodb/repositories/ShipmentTrackingMongoRepository.java:[4,51] package org.springframework.data.mongodb.repository does not exist
+[ERROR] /C:/Users/Luisv/OneDrive/Desktop/CS2/nexusmarket/nexusmarketII/src/main/java/Application/adapters/out/persistence/mongodb/repositories/ShipmentTrackingMongoRepository.java:[9,58] cannot find symbol
+  symbol: class MongoRepository
+[ERROR] /C:/Users/Luisv/OneDrive/Desktop/CS2/nexusmarket/nexusmarketII/src/main/java/Application/adapters/out/persistence/mongodb/documents/ShipmentTrackingDocument.java:[4,53] package org.springframework.data.mongodb.core.mapping does not exist
+[ERROR] /C:/Users/Luisv/OneDrive/Desktop/CS2/nexusmarket/nexusmarketII/src/main/java/Application/adapters/out/persistence/mongodb/documents/ShipmentTrackingDocument.java:[12,2] cannot find symbol
+  symbol: class Document
+[ERROR] /C:/Users/Luisv/OneDrive/Desktop/CS2/nexusmarket/nexusmarketII/src/main/java/Application/infrastructure/database/DatabaseConnectionVerifier.java:[8,45] package org.springframework.data.mongodb.core does not exist
+[ERROR] /C:/Users/Luisv/OneDrive/Desktop/CS2/nexusmarket/nexusmarketII/src/main/java/Application/infrastructure/database/DatabaseConnectionVerifier.java:[24,34] cannot find symbol
+  symbol:   class MongoTemplate
+  location: class Application.infrastructure.database.DatabaseConnectionVerifier
+[ERROR] /C:/Users/Luisv/OneDrive/Desktop/CS2/nexusmarket/nexusmarketII/src/main/java/Application/infrastructure/database/DatabaseConnectionVerifier.java:[27,54] cannot find symbol
+  symbol:   class MongoTemplate
+  location: class Application.infrastructure.database.DatabaseConnectionVerifier
+[ERROR] /C:/Users/Luisv/OneDrive/Desktop/CS2/nexusmarket/nexusmarketII/src/main/java/Application/adapters/out/persistence/mysql/entities/WarehouseEntity.java:[26,6] cannot find symbol
+  symbol:   class Column
+  location: class Application.adapters.out.persistence.mysql.entities.WarehouseEntity
+[ERROR] /C:/Users/Luisv/OneDrive/Desktop/CS2/nexusmarket/nexusmarketII/src/main/java/Application/adapters/out/persistence/mysql/entities/WarehouseEntity.java:[29,6] cannot find symbol
+  symbol:   class Column
+  location: class Application.adapters.out.persistence.mysql.entities.WarehouseEntity
+[ERROR] /C:/Users/Luisv/OneDrive/Desktop/CS2/nexusmarket/nexusmarketII/src/main/java/Application/adapters/out/persistence/mysql/entities/AddressEmbeddable.java:[17,6] cannot find symbol
+  symbol:   class Column
+  location: class Application.adapters.out.persistence.mysql.entities.AddressEmbeddable
+[ERROR] /C:/Users/Luisv/OneDrive/Desktop/CS2/nexusmarket/nexusmarketII/src/main/java/Application/adapters/out/persistence/mysql/entities/AddressEmbeddable.java:[20,6] cannot find symbol
+  symbol:   class Column
+  location: class Application.adapters.out.persistence.mysql.entities.AddressEmbeddable
+[ERROR] /C:/Users/Luisv/OneDrive/Desktop/CS2/nexusmarket/nexusmarketII/src/main/java/Application/adapters/out/persistence/mysql/entities/AddressEmbeddable.java:[23,6] cannot find symbol
+  symbol:   class Column
+  location: class Application.adapters.out.persistence.mysql.entities.AddressEmbeddable
+[ERROR] /C:/Users/Luisv/OneDrive/Desktop/CS2/nexusmarket/nexusmarketII/src/main/java/Application/adapters/out/persistence/mysql/entities/AddressEmbeddable.java:[26,6] cannot find symbol
+  symbol:   class Column
+  location: class Application.adapters.out.persistence.mysql.entities.AddressEmbeddable
+[ERROR] /C:/Users/Luisv/OneDrive/Desktop/CS2/nexusmarket/nexusmarketII/src/main/java/Application/adapters/out/persistence/mysql/entities/AddressEmbeddable.java:[29,6] cannot find symbol
+  symbol:   class Column
+  location: class Application.adapters.out.persistence.mysql.entities.AddressEmbeddable
+[INFO] 18 errors 
+[INFO] -------------------------------------------------------------
+[INFO] ------------------------------------------------------------------------
+[INFO] BUILD FAILURE
+[INFO] ------------------------------------------------------------------------
+[INFO] Total time:  9.822 s
+[INFO] Finished at: 2026-08-27T21:41:09-05:00
+[INFO] ------------------------------------------------------------------------
+[ERROR] Failed to execute goal org.apache.maven.plugins:maven-compiler-plugin:3.15.0:compile (default-compile) on project nexusmarket: Compilation failure: Compilation failure: 
+[ERROR] /C:/Users/Luisv/OneDrive/Desktop/CS2/nexusmarket/nexusmarketII/src/main/java/Application/adapters/out/persistence/mongodb/repositories/InventoryMovementMongoRepository.java:[4,51] package org.springframework.data.mongodb.repository does not exist
+[ERROR] /C:/Users/Luisv/OneDrive/Desktop/CS2/nexusmarket/nexusmarketII/src/main/java/Application/adapters/out/persistence/mongodb/repositories/InventoryMovementMongoRepository.java:[9,59] cannot find symbol
+[ERROR]   symbol: class MongoRepository
+[ERROR] /C:/Users/Luisv/OneDrive/Desktop/CS2/nexusmarket/nexusmarketII/src/main/java/Application/adapters/out/persistence/mongodb/documents/InventoryMovementDocument.java:[4,53] package org.springframework.data.mongodb.core.mapping does not exist
+[ERROR] /C:/Users/Luisv/OneDrive/Desktop/CS2/nexusmarket/nexusmarketII/src/main/java/Application/adapters/out/persistence/mongodb/documents/InventoryMovementDocument.java:[12,2] cannot find symbol
+[ERROR]   symbol: class Document
+[ERROR] /C:/Users/Luisv/OneDrive/Desktop/CS2/nexusmarket/nexusmarketII/src/main/java/Application/adapters/out/persistence/mongodb/repositories/ShipmentTrackingMongoRepository.java:[4,51] package org.springframework.data.mongodb.repository does not exist
+[ERROR] /C:/Users/Luisv/OneDrive/Desktop/CS2/nexusmarket/nexusmarketII/src/main/java/Application/adapters/out/persistence/mongodb/repositories/ShipmentTrackingMongoRepository.java:[9,58] cannot find symbol
+[ERROR]   symbol: class MongoRepository
+[ERROR] /C:/Users/Luisv/OneDrive/Desktop/CS2/nexusmarket/nexusmarketII/src/main/java/Application/adapters/out/persistence/mongodb/documents/ShipmentTrackingDocument.java:[4,53] package org.springframework.data.mongodb.core.mapping does not exist
+[ERROR] /C:/Users/Luisv/OneDrive/Desktop/CS2/nexusmarket/nexusmarketII/src/main/java/Application/adapters/out/persistence/mongodb/documents/ShipmentTrackingDocument.java:[12,2] cannot find symbol
+[ERROR]   symbol: class Document
+[ERROR] /C:/Users/Luisv/OneDrive/Desktop/CS2/nexusmarket/nexusmarketII/src/main/java/Application/infrastructure/database/DatabaseConnectionVerifier.java:[8,45] package org.springframework.data.mongodb.core does not exist
+[ERROR] /C:/Users/Luisv/OneDrive/Desktop/CS2/nexusmarket/nexusmarketII/src/main/java/Application/infrastructure/database/DatabaseConnectionVerifier.java:[24,34] cannot find symbol
+[ERROR]   symbol:   class MongoTemplate
+[ERROR]   location: class Application.infrastructure.database.DatabaseConnectionVerifier
+[ERROR] /C:/Users/Luisv/OneDrive/Desktop/CS2/nexusmarket/nexusmarketII/src/main/java/Application/infrastructure/database/DatabaseConnectionVerifier.java:[27,54] cannot find symbol
+[ERROR]   symbol:   class MongoTemplate
+[ERROR]   location: class Application.infrastructure.database.DatabaseConnectionVerifier
+[ERROR] /C:/Users/Luisv/OneDrive/Desktop/CS2/nexusmarket/nexusmarketII/src/main/java/Application/adapters/out/persistence/mysql/entities/WarehouseEntity.java:[26,6] cannot find symbol
+[ERROR]   symbol:   class Column
+[ERROR]   location: class Application.adapters.out.persistence.mysql.entities.WarehouseEntity
+[ERROR] /C:/Users/Luisv/OneDrive/Desktop/CS2/nexusmarket/nexusmarketII/src/main/java/Application/adapters/out/persistence/mysql/entities/WarehouseEntity.java:[29,6] cannot find symbol
+[ERROR]   symbol:   class Column
+[ERROR]   location: class Application.adapters.out.persistence.mysql.entities.WarehouseEntity
+[ERROR] /C:/Users/Luisv/OneDrive/Desktop/CS2/nexusmarket/nexusmarketII/src/main/java/Application/adapters/out/persistence/mysql/entities/AddressEmbeddable.java:[17,6] cannot find symbol
+[ERROR]   symbol:   class Column
+[ERROR]   location: class Application.adapters.out.persistence.mysql.entities.AddressEmbeddable
+[ERROR] /C:/Users/Luisv/OneDrive/Desktop/CS2/nexusmarket/nexusmarketII/src/main/java/Application/adapters/out/persistence/mysql/entities/AddressEmbeddable.java:[20,6] cannot find symbol
+[ERROR]   symbol:   class Column
+[ERROR]   location: class Application.adapters.out.persistence.mysql.entities.AddressEmbeddable
+[ERROR] /C:/Users/Luisv/OneDrive/Desktop/CS2/nexusmarket/nexusmarketII/src/main/java/Application/adapters/out/persistence/mysql/entities/AddressEmbeddable.java:[23,6] cannot find symbol
+[ERROR]   symbol:   class Column
+[ERROR]   location: class Application.adapters.out.persistence.mysql.entities.AddressEmbeddable
+[ERROR] /C:/Users/Luisv/OneDrive/Desktop/CS2/nexusmarket/nexusmarketII/src/main/java/Application/adapters/out/persistence/mysql/entities/AddressEmbeddable.java:[26,6] cannot find symbol
+[ERROR]   symbol:   class Column
+[ERROR]   location: class Application.adapters.out.persistence.mysql.entities.AddressEmbeddable
+[ERROR] /C:/Users/Luisv/OneDrive/Desktop/CS2/nexusmarket/nexusmarketII/src/main/java/Application/adapters/out/persistence/mysql/entities/AddressEmbeddable.java:[29,6] cannot find symbol
+[ERROR]   symbol:   class Column
+[ERROR]   location: class Application.adapters.out.persistence.mysql.entities.AddressEmbeddable
+[ERROR] -> [Help 1]
+[ERROR] 
+[ERROR] To see the full stack trace of the errors, re-run Maven with the -e switch.
+[ERROR] Re-run Maven using the -X switch to enable full debug logging.
+[ERROR] 
+[ERROR] For more information about the errors and possible solutions, please read the following articles:
+[ERROR] [Help 1] http://cwiki.apache.org/confluence/display/MAVEN/MojoFailureException

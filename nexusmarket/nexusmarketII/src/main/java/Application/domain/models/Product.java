@@ -18,7 +18,7 @@ public abstract class Product {
 
     private final String identifier;
     private final String name;
-    private final String description;
+    private String description;
     private final List<ProductVariant> variants = new ArrayList<>();
     private ProductStatus status;
     private final Seller seller;
@@ -54,6 +54,17 @@ public abstract class Product {
 
     public String getDescription() {
         return description;
+    }
+
+    /**
+     * Updates the product description (Manage Product service). The
+     * identifier, name and seller binding remain immutable.
+     */
+    public void updateDescription(String newDescription) {
+        if (newDescription == null || newDescription.isBlank()) {
+            throw new IllegalArgumentException("Product description must not be null or blank");
+        }
+        this.description = newDescription;
     }
 
     public List<ProductVariant> getVariants() {

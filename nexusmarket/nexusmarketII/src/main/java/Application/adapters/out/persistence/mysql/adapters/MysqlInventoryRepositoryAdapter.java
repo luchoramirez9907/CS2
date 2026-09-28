@@ -61,6 +61,14 @@ public class MysqlInventoryRepositoryAdapter implements InventoryRepository {
                 .toList();
     }
 
+    @Override
+    @Transactional(readOnly = true)
+    public List<Inventory> findAll() {
+        return jpaRepository.findAll().stream()
+                .map(this::toDomain)
+                .toList();
+    }
+
     private Inventory toDomain(Application.adapters.out.persistence.mysql.entities.InventoryEntity entity) {
         Product product = productRepository.findById(entity.getProductId())
                 .orElseThrow(() -> new IllegalStateException("Product '" + entity.getProductId()

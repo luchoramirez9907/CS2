@@ -11,14 +11,23 @@ import Application.domain.ports.out.ReturnRepository;
 import Application.domain.ports.out.SellerRepository;
 import Application.domain.ports.out.ShipmentTrackingRepository;
 import Application.domain.ports.out.ShoppingCartRepository;
+import Application.domain.ports.out.WarehouseRepository;
+import Application.domain.services.AuthorizationService;
+import Application.domain.services.BillingService;
+import Application.domain.services.BuyerManagementService;
+import Application.domain.services.InventoryManagementService;
 import Application.domain.services.InventoryReservationService;
 import Application.domain.services.OrderCheckoutService;
+import Application.domain.services.OrderManagementService;
 import Application.domain.services.ProductCatalogService;
 import Application.domain.services.RefundProcessingService;
+import Application.domain.services.ReportingService;
 import Application.domain.services.ReturnManagementService;
 import Application.domain.services.SellerRegistrationService;
 import Application.domain.services.ShipmentDispatchService;
 import Application.domain.services.ShoppingCartService;
+import Application.domain.services.UserManagementService;
+import Application.domain.services.WarehouseManagementService;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -47,10 +56,12 @@ public class DomainBeanConfig {
 
     @Bean
     public ProductCatalogService productCatalogService(
+            PersonRepository personRepository,
             SellerRepository sellerRepository,
             ProductRepository productRepository,
             NotificationService notificationService) {
-        return new ProductCatalogService(sellerRepository, productRepository, notificationService);
+        return new ProductCatalogService(personRepository, sellerRepository, productRepository,
+                notificationService);
     }
 
     @Bean
@@ -100,8 +111,90 @@ public class DomainBeanConfig {
             OrderRepository orderRepository,
             ShipmentTrackingRepository trackingRepository,
             InventoryReservationService inventoryReservationService,
-            NotificationService notificationService) {
+            NotificationService notificationService,
+            PersonRepository personRepository,
+            WarehouseRepository warehouseRepository) {
         return new ShipmentDispatchService(orderRepository, trackingRepository,
-                inventoryReservationService, notificationService);
+                inventoryReservationService, notificationService,
+                personRepository, warehouseRepository);
+    }
+
+    // ------------------------------------------------------------------
+    // New subdomain services (per SDD - Services.md)
+    // ------------------------------------------------------------------
+
+    @Bean
+    public UserManagementService userManagementService(
+            PersonRepository personRepository,
+            NotificationService notificationService) {
+        return new UserManagementService(personRepository, notificationService);
+    }
+
+    @Bean
+    public BuyerManagementService buyerManagementService(
+            PersonRepository personRepository,
+            BuyerRepository buyerRepository,
+            OrderRepository orderRepository,
+            ReturnRepository returnRepository,
+            NotificationService notificationService) {
+        return new BuyerManagementService(personRepository, buyerRepository,
+                orderRepository, returnRepository, notificationService);
+    }
+
+    @Bean
+    public WarehouseManagementService warehouseManagementService(
+            PersonRepository personRepository,
+            SellerRepository sellerRepository,
+            WarehouseRepository warehouseRepository,
+            NotificationService notificationService) {
+        return new WarehouseManagementService(personRepository, sellerRepository,
+                warehouseRepository, notificationService);
+    }
+
+    @Bean
+    public InventoryManagementService inventoryManagementService(
+            PersonRepository personRepository,
+            ProductRepository productRepository,
+            WarehouseRepository warehouseRepository,
+            InventoryRepository inventoryRepository,
+            InventoryMovementRepository movementRepository,
+            NotificationService notificationService) {
+        return new InventoryManagementService(personRepository, productRepository,
+                warehouseRepository, inventoryRepository, movementRepository,
+                notificationService);
+    }
+
+    @Bean
+    public OrderManagementService orderManagementService(
+            PersonRepository personRepository,
+            OrderRepository orderRepository,
+            NotificationService notificationService) {
+        return new OrderManagementService(personRepository, orderRepository, notificationService);
+    }
+
+    @Bean
+    public BillingService billingService(
+            PersonRepository personRepository,
+            OrderRepository orderRepository,
+            NotificationService notificationService) {
+        return new BillingService(personRepository, orderRepository, notificationService);
+    }
+
+    @Bean
+    public ReportingService reportingService(
+            PersonRepository personRepository,
+            OrderRepository orderRepository,
+            ProductRepository productRepository,
+            InventoryRepository inventoryRepository) {
+        return new ReportingService(personRepository, orderRepository, productRepository,
+                inventoryRepository);
+    }
+
+    @Bean
+    public AuthorizationService authorizationService(
+            PersonRepository personRepository,
+            OrderRepository orderRepository,
+            WarehouseRepository warehouseRepository) {
+        return new AuthorizationService(personRepository, orderRepository, warehouseRepository);
     }
 }

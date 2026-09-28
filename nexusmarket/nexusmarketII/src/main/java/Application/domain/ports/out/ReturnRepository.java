@@ -2,6 +2,7 @@ package Application.domain.ports.out;
 
 import Application.domain.models.Return;
 
+import java.util.List;
 import java.util.Optional;
 
 /**
@@ -12,4 +13,7 @@ public interface ReturnRepository {
     void save(Return returnRequest);
 
     Optional<Return> findById(String returnId);
+
+    /** Every return requested by the given buyer (Manage Buyer). */
+    List<Return> findByBuyerId(String buyerId);
 }

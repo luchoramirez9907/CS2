@@ -110,6 +110,12 @@ class DomainBusinessRulesTest {
         public void save(Product product) { store.put(product.getIdentifier(), product); }
 
         public Optional<Product> findById(String id) { return Optional.ofNullable(store.get(id)); }
+
+        public List<Product> findBySellerId(String sellerId) {
+            return store.values().stream()
+                    .filter(p -> p.getSeller().getIdentifier().equals(sellerId))
+                    .toList();
+        }
     }
 
     static class FakeInventoryRepository implements InventoryRepository {
@@ -123,6 +129,10 @@ class DomainBusinessRulesTest {
             return store.values().stream()
                     .filter(i -> i.getProduct().getIdentifier().equals(productId))
                     .toList();
+        }
+
+        public List<Inventory> findAll() {
+            return List.copyOf(store.values());
         }
     }
 
@@ -154,6 +164,16 @@ class DomainBusinessRulesTest {
         public void save(Order order) { store.put(order.getOrderId(), order); }
 
         public Optional<Order> findById(String orderId) { return Optional.ofNullable(store.get(orderId)); }
+
+        public List<Order> findByBuyerId(String buyerId) {
+            return store.values().stream()
+                    .filter(o -> o.getBuyer().getIdentifier().equals(buyerId))
+                    .toList();
+        }
+
+        public List<Order> findAll() {
+            return List.copyOf(store.values());
+        }
     }
 
     static class FakeReturnRepository implements ReturnRepository {
@@ -162,6 +182,12 @@ class DomainBusinessRulesTest {
         public void save(Return returnRequest) { store.put(returnRequest.getReturnId(), returnRequest); }
 
         public Optional<Return> findById(String returnId) { return Optional.ofNullable(store.get(returnId)); }
+
+        public List<Return> findByBuyerId(String buyerId) {
+            return store.values().stream()
+                    .filter(r -> r.getBuyer().getIdentifier().equals(buyerId))
+                    .toList();
+        }
     }
 
     static class FakeNotifications implements NotificationService {
@@ -208,7 +234,7 @@ class DomainBusinessRulesTest {
         InventoryReservationService reservationService =
                 new InventoryReservationService(inventoryRepo, movementRepo);
         sellerRegistration = new SellerRegistrationService(personRepo, sellerRepo, new FakeNotifications());
-        productCatalog = new ProductCatalogService(sellerRepo, productRepo, new FakeNotifications());
+        productCatalog = new ProductCatalogService(personRepo, sellerRepo, productRepo, new FakeNotifications());
         cartService = new ShoppingCartService(buyerRepo, cartRepo, productRepo,
                 reservationService, new FakeNotifications());
         checkoutService = new OrderCheckoutService(buyerRepo, cartRepo, orderRepo, new FakeNotifications());

@@ -17,7 +17,7 @@ import java.util.List;
 public abstract class Warehouse {
 
     private final String identifier;
-    private final String name;
+    private String name;
     private final Address address;
     private final List<Inventory> inventoryRecords = new ArrayList<>();
 
@@ -42,6 +42,18 @@ public abstract class Warehouse {
 
     public String getName() {
         return name;
+    }
+
+    /**
+     * Updates the warehouse display name (Manage Warehouse service).
+     * The address remains immutable: relocating a warehouse is modeled
+     * as registering a new one, preserving inventory traceability.
+     */
+    public void rename(String newName) {
+        if (newName == null || newName.isBlank()) {
+            throw new IllegalArgumentException("Warehouse name must not be null or blank");
+        }
+        this.name = newName;
     }
 
     public Address getAddress() {

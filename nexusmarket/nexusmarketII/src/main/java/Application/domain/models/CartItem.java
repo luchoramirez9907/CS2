@@ -52,6 +52,18 @@ public class CartItem {
         this.unitPrice = newUnitPrice;
     }
 
+    /**
+     * Sets the selection to an absolute quantity (Manage Cart Items
+     * service). The service is responsible for compensating the stock
+     * reservation delta before calling this method.
+     */
+    public void changeQuantity(int newQuantity) {
+        if (newQuantity <= 0) {
+            throw new IllegalArgumentException("Quantity must be positive");
+        }
+        this.quantity = newQuantity;
+    }
+
     public BigDecimal getSubtotal() {
         return unitPrice.multiply(BigDecimal.valueOf(quantity));
     }

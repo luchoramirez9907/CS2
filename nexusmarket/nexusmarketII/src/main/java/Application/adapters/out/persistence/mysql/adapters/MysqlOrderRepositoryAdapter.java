@@ -1,5 +1,6 @@
 package Application.adapters.out.persistence.mysql.adapters;
 
+import Application.adapters.out.persistence.mysql.entities.OrderEntity;
 import Application.adapters.out.persistence.mysql.mappers.OrderMapper;
 import Application.adapters.out.persistence.mysql.repositories.OrderJpaRepository;
 import Application.domain.models.Buyer;
@@ -11,6 +12,7 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
 import java.util.Optional;
 
 /**
@@ -46,14 +48,32 @@ public class MysqlOrderRepositoryAdapter implements OrderRepository {
     @Override
     @Transactional(readOnly = true)
     public Optional<Order> findById(String orderId) {
-        return jpaRepository.findById(orderId).map(entity -> {
-            Buyer buyer = buyerRepository.findById(entity.getBuyerId())
-                    .orElseThrow(() -> new IllegalStateException("Buyer '" + entity.getBuyerId()
-                            + "' referenced by order does not exist"));
-            return OrderMapper.toDomain(entity, buyer,
-                    productId -> productRepository.findById(productId)
-                            .orElseThrow(() -> new IllegalStateException("Product '" + productId
-                                    + "' referenced by order does not exist")));
-        });
+        return jpaRepository.findById(orderId).map(this::toDomain);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<Order> findByBuyerId(String buyerId) {
+        return jpaRepository.findByBuyerId(buyerId).stream()
+                .map(this::toDomain)
+                .toList();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<Order> findAll() {
+        return jpaRepository.findAll().stream()
+                .map(this::toDomain)
+                .toList();
+    }
+
+    private Order toDomain(OrderEntity entity) {
+        Buyer buyer = buyerRepository.findById(entity.getBuyerId())
+                .orElseThrow(() -> new IllegalStateException("Buyer '" + entity.getBuyerId()
+                        + "' referenced by order does not exist"));
+        return OrderMapper.toDomain(entity, buyer,
+                productId -> productRepository.findById(productId)
+                        .orElseThrow(() -> new IllegalStateException("Product '" + productId
+                                + "' referenced by order does not exist")));
     }
 }

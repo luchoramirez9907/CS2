@@ -15,4 +15,7 @@ public interface InventoryRepository {
     Optional<Inventory> findById(String identifier);
 
     List<Inventory> findByProductId(String productId);
+
+    /** Every inventory record in the platform (commercial reporting). */
+    List<Inventory> findAll();
 }

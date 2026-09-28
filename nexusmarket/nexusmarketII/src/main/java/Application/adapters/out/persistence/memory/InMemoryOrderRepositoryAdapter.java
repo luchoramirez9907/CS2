@@ -5,6 +5,7 @@ import Application.domain.ports.out.OrderRepository;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
 import java.util.Optional;
 
 /**
@@ -28,5 +29,17 @@ public class InMemoryOrderRepositoryAdapter implements OrderRepository {
     @Override
     public Optional<Order> findById(String orderId) {
         return Optional.ofNullable(store.orders.get(orderId));
+    }
+
+    @Override
+    public List<Order> findByBuyerId(String buyerId) {
+        return store.orders.values().stream()
+                .filter(order -> order.getBuyer().getIdentifier().equals(buyerId))
+                .toList();
+    }
+
+    @Override
+    public List<Order> findAll() {
+        return List.copyOf(store.orders.values());
     }
 }

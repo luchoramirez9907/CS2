@@ -8,10 +8,12 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 /**
- * JPA entity for post-sale Return requests.
+ * JPA entity for post-sale Return requests, including the refund each
+ * one may have generated.
  */
 @Entity
 @Table(name = "returns")
@@ -38,4 +40,19 @@ public class ReturnEntity {
 
     @Column(name = "request_date", nullable = false)
     private LocalDateTime requestDate;
+
+    @Column(name = "refund_id", length = 64)
+    private String refundId;
+
+    @Column(name = "refund_amount", precision = 12, scale = 2)
+    private BigDecimal refundAmount;
+
+    @Column(name = "refund_date")
+    private LocalDateTime refundDate;
+
+    @Column(name = "refund_approved_by_id", length = 64)
+    private String refundApprovedById;
+
+    @Column(name = "refund_status_code", length = 32)
+    private String refundStatusCode;
 }

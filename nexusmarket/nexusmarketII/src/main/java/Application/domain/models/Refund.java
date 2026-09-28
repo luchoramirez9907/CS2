@@ -97,6 +97,20 @@ public class Refund {
         this.refundStatus = RefundStatus.REJECTED;
     }
 
+    /**
+     * Rebuilds a persisted refund and links it to its return without
+     * re-applying issuing validations. Used exclusively by persistence
+     * mappers.
+     */
+    public static Refund reconstruct(String refundId, Return relatedReturn, BigDecimal amount,
+                                     LocalDateTime refundDate, Person approvedBy,
+                                     RefundStatus refundStatus) {
+        Refund refund = new Refund(refundId, relatedReturn, amount, refundDate, approvedBy);
+        refund.refundStatus = refundStatus;
+        relatedReturn.attachRefund(refund);
+        return refund;
+    }
+
     private void requireStatus(RefundStatus expected, String operation) {
         if (refundStatus != expected) {
             throw new IllegalArgumentException("Cannot " + operation + " refund '" + refundId

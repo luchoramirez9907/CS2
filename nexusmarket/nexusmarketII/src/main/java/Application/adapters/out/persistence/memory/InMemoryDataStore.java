@@ -6,6 +6,7 @@ import Application.domain.models.Order;
 import Application.domain.models.Person;
 import Application.domain.models.Product;
 import Application.domain.models.Return;
+import Application.domain.models.ShipmentTrackingEvent;
 import Application.domain.models.ShoppingCart;
 import Application.domain.models.Warehouse;
 import org.springframework.context.annotation.Profile;
@@ -34,5 +35,5 @@ public class InMemoryDataStore {
     public final Map<String, Order> orders = new HashMap<>();
     public final Map<String, Return> returns = new HashMap<>();
     public final List<InventoryMovement> movements = Collections.synchronizedList(new ArrayList<>());
-    public final List<String> trackingEvents = Collections.synchronizedList(new ArrayList<>());
+    public final List<ShipmentTrackingEvent> trackingEvents = Collections.synchronizedList(new ArrayList<>());
 }

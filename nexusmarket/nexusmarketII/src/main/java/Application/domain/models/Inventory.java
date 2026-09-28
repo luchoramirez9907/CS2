@@ -15,8 +15,9 @@ import java.util.List;
  * commercialization at a specific warehouse.
  *
  * Business rules: belongs to exactly one Product and one Warehouse;
- * negative stock is never permitted; every change generates an
- * InventoryMovement.
+ * negative stock is never permitted; stock marked as damaged is kept
+ * apart from the available stock, so it can never be reserved; every
+ * change generates an InventoryMovement.
  */
 public class Inventory {
 
@@ -25,12 +26,18 @@ public class Inventory {
     private final Warehouse warehouse;
     private int availableQuantity;
     private int reservedQuantity;
+    private int damagedQuantity;
     private int movementSequence;
     private final List<InventoryMovement> movements = new ArrayList<>();
     private final List<InventoryMovement> pendingMovements = new ArrayList<>();
 
     public Inventory(String identifier, Product product, Warehouse warehouse,
                      int availableQuantity, int reservedQuantity) {
+        this(identifier, product, warehouse, availableQuantity, reservedQuantity, 0);
+    }
+
+    public Inventory(String identifier, Product product, Warehouse warehouse,
+                     int availableQuantity, int reservedQuantity, int damagedQuantity) {
         if (identifier == null || identifier.isBlank()) {
             throw new IllegalArgumentException("Inventory identifier must not be null or blank");
         }
@@ -40,7 +47,7 @@ public class Inventory {
         if (warehouse == null) {
             throw new IllegalArgumentException("Inventory must be linked to exactly one Warehouse");
         }
-        if (availableQuantity < 0 || reservedQuantity < 0) {
+        if (availableQuantity < 0 || reservedQuantity < 0 || damagedQuantity < 0) {
             throw new IllegalArgumentException("Negative stock is never permitted");
         }
         this.identifier = identifier;
@@ -48,6 +55,7 @@ public class Inventory {
         this.warehouse = warehouse;
         this.availableQuantity = availableQuantity;
         this.reservedQuantity = reservedQuantity;
+        this.damagedQuantity = damagedQuantity;
     }
 
     public String getIdentifier() { return identifier; }
@@ -59,6 +67,8 @@ public class Inventory {
     public int getAvailableQuantity() { return availableQuantity; }
 
     public int getReservedQuantity() { return reservedQuantity; }
+
+    public int getDamagedQuantity() { return damagedQuantity; }
 
     public int getTotalQuantity() { return availableQuantity + reservedQuantity; }
 
@@ -135,6 +145,20 @@ public class Inventory {
         }
         availableQuantity += signedDelta;
         registerMovement(InventoryMovementType.ADJUSTMENT, signedDelta, performedBy);
+    }
+
+    /**
+     * Marks available stock as damaged. Damaged units leave the available
+     * stock (recorded as a negative ADJUSTMENT) and can never be reserved.
+     */
+    public void markDamaged(int quantity, Person performedBy) {
+        requirePositive(quantity, "damage");
+        if (availableQuantity < quantity) {
+            throw new InsufficientInventoryException(product.getIdentifier(), quantity, availableQuantity);
+        }
+        availableQuantity -= quantity;
+        damagedQuantity += quantity;
+        registerMovement(InventoryMovementType.ADJUSTMENT, -quantity, performedBy);
     }
 
     /** Reinstates stock as a result of a product return. */

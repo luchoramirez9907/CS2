@@ -22,6 +22,8 @@ import Application.domain.ports.out.ProductRepository;
 import Application.domain.ports.out.ReturnRepository;
 import Application.domain.ports.out.SellerRepository;
 import Application.domain.ports.out.ShoppingCartRepository;
+import Application.domain.services.AuthorizationService;
+import Application.domain.services.BillingService;
 import Application.domain.services.InventoryReservationService;
 import Application.domain.services.OrderCheckoutService;
 import Application.domain.services.ProductCatalogService;
@@ -69,6 +71,10 @@ class DomainBusinessRulesTest {
 
         public Optional<Person> findById(String id) { return Optional.ofNullable(store.get(id)); }
 
+        public Optional<Person> findByEmail(String email) {
+            return store.values().stream().filter(p -> p.getEmail().equalsIgnoreCase(email)).findFirst();
+        }
+
         public boolean existsByIdentifier(String id) { return store.containsKey(id); }
 
         public boolean existsByEmail(String email) {
@@ -110,6 +116,12 @@ class DomainBusinessRulesTest {
         public void save(Product product) { store.put(product.getIdentifier(), product); }
 
         public Optional<Product> findById(String id) { return Optional.ofNullable(store.get(id)); }
+
+        public List<Product> findBySellerId(String sellerId) {
+            return store.values().stream()
+                    .filter(p -> p.getSeller().getIdentifier().equals(sellerId))
+                    .toList();
+        }
     }
 
     static class FakeInventoryRepository implements InventoryRepository {
@@ -124,6 +136,15 @@ class DomainBusinessRulesTest {
                     .filter(i -> i.getProduct().getIdentifier().equals(productId))
                     .toList();
         }
+
+        public Optional<Inventory> findByProductIdAndWarehouseId(String productId, String warehouseId) {
+            return store.values().stream()
+                    .filter(i -> i.getProduct().getIdentifier().equals(productId)
+                            && i.getWarehouse().getIdentifier().equals(warehouseId))
+                    .findFirst();
+        }
+
+        public List<Inventory> findAll() { return List.copyOf(store.values()); }
     }
 
     static class FakeMovementRepository implements InventoryMovementRepository {
@@ -154,6 +175,14 @@ class DomainBusinessRulesTest {
         public void save(Order order) { store.put(order.getOrderId(), order); }
 
         public Optional<Order> findById(String orderId) { return Optional.ofNullable(store.get(orderId)); }
+
+        public List<Order> findByBuyerId(String buyerId) {
+            return store.values().stream()
+                    .filter(o -> o.getBuyer().getIdentifier().equals(buyerId))
+                    .toList();
+        }
+
+        public List<Order> findAll() { return List.copyOf(store.values()); }
     }
 
     static class FakeReturnRepository implements ReturnRepository {
@@ -162,6 +191,14 @@ class DomainBusinessRulesTest {
         public void save(Return returnRequest) { store.put(returnRequest.getReturnId(), returnRequest); }
 
         public Optional<Return> findById(String returnId) { return Optional.ofNullable(store.get(returnId)); }
+
+        public List<Return> findByBuyerId(String buyerId) {
+            return store.values().stream()
+                    .filter(r -> r.getBuyer().getIdentifier().equals(buyerId))
+                    .toList();
+        }
+
+        public List<Return> findAll() { return List.copyOf(store.values()); }
     }
 
     static class FakeNotifications implements NotificationService {
@@ -211,10 +248,13 @@ class DomainBusinessRulesTest {
         productCatalog = new ProductCatalogService(sellerRepo, productRepo, new FakeNotifications());
         cartService = new ShoppingCartService(buyerRepo, cartRepo, productRepo,
                 reservationService, new FakeNotifications());
-        checkoutService = new OrderCheckoutService(buyerRepo, cartRepo, orderRepo, new FakeNotifications());
+        AuthorizationService authorization = new AuthorizationService(personRepo);
+        BillingService billing = new BillingService(orderRepo, authorization, new FakeNotifications());
+        checkoutService = new OrderCheckoutService(buyerRepo, cartRepo, orderRepo, billing,
+                new FakeNotifications());
         returnManagement = new ReturnManagementService(buyerRepo, orderRepo, returnRepo,
-                personRepo, inventoryRepo, reservationService, new FakeNotifications());
-        refundProcessing = new RefundProcessingService(returnRepo, personRepo, new FakeNotifications());
+                inventoryRepo, reservationService, authorization, new FakeNotifications());
+        refundProcessing = new RefundProcessingService(returnRepo, authorization, new FakeNotifications());
 
         admin = new Administrator("admin-1", "Ada Admin", "admin@x.com", UserStatus.ACTIVE);
         supervisor = new Supervisor("sup-1", "Sam Supervisor", "sup@x.com", UserStatus.ACTIVE);

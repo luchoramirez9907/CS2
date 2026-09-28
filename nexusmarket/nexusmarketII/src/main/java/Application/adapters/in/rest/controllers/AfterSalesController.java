@@ -9,14 +9,16 @@ import Application.adapters.in.rest.responses.RefundResponse;
 import Application.adapters.in.rest.responses.ReturnResponse;
 import Application.domain.models.Refund;
 import Application.domain.models.Return;
-import Application.domain.ports.in.ApproveReturnUseCase;
 import Application.domain.ports.in.ProcessRefundUseCase;
 import Application.domain.ports.in.RequestReturnUseCase;
+import Application.domain.ports.in.ResolveReturnUseCase;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -28,14 +30,14 @@ import org.springframework.web.bind.annotation.RestController;
 public class AfterSalesController {
 
     private final RequestReturnUseCase requestReturnUseCase;
-    private final ApproveReturnUseCase approveReturnUseCase;
+    private final ResolveReturnUseCase resolveReturnUseCase;
     private final ProcessRefundUseCase processRefundUseCase;
 
     public AfterSalesController(RequestReturnUseCase requestReturnUseCase,
-                                ApproveReturnUseCase approveReturnUseCase,
+                                ResolveReturnUseCase resolveReturnUseCase,
                                 ProcessRefundUseCase processRefundUseCase) {
         this.requestReturnUseCase = requestReturnUseCase;
-        this.approveReturnUseCase = approveReturnUseCase;
+        this.resolveReturnUseCase = resolveReturnUseCase;
         this.processRefundUseCase = processRefundUseCase;
     }
 
@@ -52,9 +54,34 @@ public class AfterSalesController {
     public ResponseEntity<ApiResponse<ReturnResponse>> approveReturn(
             @PathVariable String returnId,
             @RequestBody ApproveReturnRequest request) {
-        Return returnRequest = approveReturnUseCase.approveReturn(request.administratorId(), returnId);
+        Return returnRequest = resolveReturnUseCase.approveReturn(request.administratorId(), returnId);
         return ResponseEntity.ok()
                 .body(ApiResponse.ok("Return approved", AfterSalesDtoMapper.toResponse(returnRequest)));
+    }
+
+    @PostMapping("/returns/{returnId}/rejection")
+    public ResponseEntity<ApiResponse<ReturnResponse>> rejectReturn(
+            @PathVariable String returnId,
+            @RequestBody ApproveReturnRequest request) {
+        Return returnRequest = resolveReturnUseCase.rejectReturn(request.administratorId(), returnId);
+        return ResponseEntity.ok()
+                .body(ApiResponse.ok("Return rejected", AfterSalesDtoMapper.toResponse(returnRequest)));
+    }
+
+    @GetMapping("/returns/{returnId}")
+    public ResponseEntity<ApiResponse<ReturnResponse>> consultReturn(
+            @RequestHeader("X-User-Id") String requesterId,
+            @PathVariable String returnId) {
+        Return returnRequest = resolveReturnUseCase.consultReturn(requesterId, returnId);
+        return ResponseEntity.ok(ApiResponse.ok("Return found", AfterSalesDtoMapper.toResponse(returnRequest)));
+    }
+
+    @GetMapping("/returns/{returnId}/refund")
+    public ResponseEntity<ApiResponse<RefundResponse>> consultRefund(
+            @RequestHeader("X-User-Id") String requesterId,
+            @PathVariable String returnId) {
+        Refund refund = processRefundUseCase.consultRefund(requesterId, returnId);
+        return ResponseEntity.ok(ApiResponse.ok("Refund found", AfterSalesDtoMapper.toResponse(refund)));
     }
 
     @PostMapping("/refunds")

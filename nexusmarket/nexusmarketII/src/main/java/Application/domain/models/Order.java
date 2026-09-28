@@ -132,6 +132,49 @@ public class Order {
         transitionTo(OrderStatus.DELIVERED);
     }
 
+    /**
+     * Determines whether the order contains physical products and
+     * therefore requires a Shipment to be fulfilled.
+     */
+    public boolean requiresShipment() {
+        return items.stream().anyMatch(item -> item.getProduct().requiresPhysicalDispatch());
+    }
+
+    /**
+     * Determines whether the order contains products published by the
+     * given seller.
+     */
+    public boolean containsProductsOf(String sellerId) {
+        return items.stream()
+                .anyMatch(item -> item.getProduct().getSeller().getIdentifier().equals(sellerId));
+    }
+
+    /**
+     * Registers the financial confirmation of the order (PAID). Orders made
+     * exclusively of digital products are delivered immediately upon
+     * payment confirmation, so they complete their lifecycle at once.
+     */
+    public void registerPayment() {
+        markPaid();
+        if (!requiresShipment()) {
+            markShipped();
+            markDelivered();
+        }
+    }
+
+    /**
+     * Finalizes the order once its shipment has been delivered to the
+     * buyer. A finalized order cannot be modified afterward.
+     */
+    public void finalizeOrder() {
+        if (shipment == null || shipment.getShipmentStatus()
+                != Application.domain.enums.ShipmentStatus.DELIVERED) {
+            throw new IllegalArgumentException("Order '" + orderId
+                    + "' can only be finalized once its shipment has been delivered");
+        }
+        markDelivered();
+    }
+
     public void attachInvoice(Invoice invoice) {
         ensureModifiable();
         if (invoice == null || !this.equals(invoice.getOrder())) {
@@ -151,6 +194,14 @@ public class Order {
         if (this.shipment != null) {
             throw new IllegalArgumentException("Order already has a shipment");
         }
+        this.shipment = shipment;
+    }
+
+    /**
+     * Restores a persisted shipment without lifecycle validations. Used
+     * exclusively by {@link Shipment#reconstruct}.
+     */
+    void restoreShipment(Shipment shipment) {
         this.shipment = shipment;
     }
 

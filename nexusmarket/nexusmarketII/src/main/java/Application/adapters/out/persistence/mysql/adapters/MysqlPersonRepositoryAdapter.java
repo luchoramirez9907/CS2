@@ -43,6 +43,13 @@ public class MysqlPersonRepositoryAdapter implements PersonRepository {
 
     @Override
     @Transactional(readOnly = true)
+    public Optional<Person> findByEmail(String email) {
+        return jpaRepository.findByEmail(email)
+                .map(entity -> PersonMapper.toDomain(entity, this::requirePerson));
+    }
+
+    @Override
+    @Transactional(readOnly = true)
     public boolean existsByIdentifier(String identifier) {
         return jpaRepository.existsById(identifier);
     }

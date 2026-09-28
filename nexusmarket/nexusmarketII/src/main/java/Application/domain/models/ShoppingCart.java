@@ -5,6 +5,7 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 
 /**
  * ShoppingCart
@@ -77,6 +78,22 @@ public class ShoppingCart {
             }
         }
         items.add(new CartItem(product, quantity, unitPrice));
+    }
+
+    public Optional<CartItem> findItem(String productId) {
+        return items.stream()
+                .filter(item -> item.getProduct().getIdentifier().equals(productId))
+                .findFirst();
+    }
+
+    /**
+     * Replaces the quantity selected of a product already in the cart.
+     */
+    public void updateItemQuantity(String productId, int newQuantity) {
+        CartItem item = findItem(productId)
+                .orElseThrow(() -> new IllegalArgumentException("Product '" + productId
+                        + "' is not in the cart"));
+        item.changeQuantity(newQuantity);
     }
 
     /**

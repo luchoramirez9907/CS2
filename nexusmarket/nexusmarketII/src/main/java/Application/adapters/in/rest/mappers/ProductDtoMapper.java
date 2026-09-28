@@ -39,6 +39,15 @@ public final class ProductDtoMapper {
         return product;
     }
 
+    public static List<ProductVariant> toVariants(List<PublishProductRequest.VariantRequest> requests) {
+        if (requests == null) {
+            return null;
+        }
+        return requests.stream()
+                .map(variant -> new ProductVariant(variant.name(), variant.value()))
+                .toList();
+    }
+
     public static ProductResponse toResponse(Product product) {
         List<ProductResponse.VariantResponse> variants = new ArrayList<>();
         for (ProductVariant variant : product.getVariants()) {

@@ -55,6 +55,15 @@ public class Buyer extends Person {
         this.additionalAddresses.add(address);
     }
 
+    public void replaceAdditionalAddresses(List<Address> addresses) {
+        if (addresses == null) {
+            throw new IllegalArgumentException("Additional addresses must not be null");
+        }
+        List<Address> replacement = new ArrayList<>(addresses);
+        this.additionalAddresses.clear();
+        replacement.forEach(this::addAdditionalAddress);
+    }
+
     public BuyerCommercialStatus getCommercialStatus() {
         return commercialStatus;
     }

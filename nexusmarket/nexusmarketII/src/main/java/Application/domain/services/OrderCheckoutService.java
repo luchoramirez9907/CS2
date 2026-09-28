@@ -1,7 +1,6 @@
 package Application.domain.services;
 
 import Application.domain.models.Buyer;
-import Application.domain.models.Invoice;
 import Application.domain.models.Order;
 import Application.domain.models.ShoppingCart;
 import Application.domain.ports.in.CreateOrderUseCase;
@@ -10,7 +9,6 @@ import Application.domain.ports.out.NotificationService;
 import Application.domain.ports.out.OrderRepository;
 import Application.domain.ports.out.ShoppingCartRepository;
 
-import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
@@ -24,27 +22,25 @@ import java.util.UUID;
  */
 public class OrderCheckoutService implements CreateOrderUseCase {
 
-    /**
-     * Tax rate applied to issued invoices (business-configurable).
-     */
-    public static final BigDecimal DEFAULT_TAX_RATE = BigDecimal.ZERO;
-
     private final BuyerRepository buyerRepository;
     private final ShoppingCartRepository cartRepository;
     private final OrderRepository orderRepository;
+    private final BillingService billingService;
     private final NotificationService notificationService;
 
     public OrderCheckoutService(BuyerRepository buyerRepository,
                                 ShoppingCartRepository cartRepository,
                                 OrderRepository orderRepository,
+                                BillingService billingService,
                                 NotificationService notificationService) {
-        if (buyerRepository == null || cartRepository == null
-                || orderRepository == null || notificationService == null) {
+        if (buyerRepository == null || cartRepository == null || orderRepository == null
+                || billingService == null || notificationService == null) {
             throw new IllegalArgumentException("OrderCheckoutService requires its dependencies");
         }
         this.buyerRepository = buyerRepository;
         this.cartRepository = cartRepository;
         this.orderRepository = orderRepository;
+        this.billingService = billingService;
         this.notificationService = notificationService;
     }
 
@@ -60,10 +56,11 @@ public class OrderCheckoutService implements CreateOrderUseCase {
             throw new IllegalArgumentException("Cannot checkout an empty shopping cart");
         }
 
+        // The stock was already reserved when the items were added to the cart;
+        // the order inherits those reservations.
         Order order = Order.fromCart(cart, UUID.randomUUID().toString(), LocalDateTime.now());
-        order.attachInvoice(Invoice.issueFor(order, UUID.randomUUID().toString(),
-                LocalDateTime.now(), DEFAULT_TAX_RATE));
         order.confirm();
+        billingService.issueInvoice(order);
 
         orderRepository.save(order);
         buyer.addOrder(order);

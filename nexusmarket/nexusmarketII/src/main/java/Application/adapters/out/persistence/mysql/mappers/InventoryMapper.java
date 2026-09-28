@@ -28,11 +28,12 @@ public final class InventoryMapper {
 
     public static Inventory toDomain(InventoryEntity entity, Product product, Warehouse warehouse) {
         return new Inventory(entity.getIdentifier(), product, warehouse,
-                entity.getAvailableQuantity(), entity.getReservedQuantity());
+                entity.getAvailableQuantity(), entity.getReservedQuantity(), entity.getDamagedQuantity());
     }
 
     private static void applyQuantities(InventoryEntity entity, Inventory inventory) {
         entity.setAvailableQuantity(inventory.getAvailableQuantity());
         entity.setReservedQuantity(inventory.getReservedQuantity());
+        entity.setDamagedQuantity(inventory.getDamagedQuantity());
     }
 }

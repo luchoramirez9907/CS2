@@ -31,6 +31,13 @@ public class InMemoryPersonRepositoryAdapter implements PersonRepository {
     }
 
     @Override
+    public Optional<Person> findByEmail(String email) {
+        return store.persons.values().stream()
+                .filter(person -> person.getEmail().equalsIgnoreCase(email))
+                .findFirst();
+    }
+
+    @Override
     public boolean existsByIdentifier(String identifier) {
         return store.persons.containsKey(identifier);
     }

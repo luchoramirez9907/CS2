@@ -17,6 +17,7 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
 import java.util.Optional;
 
 /**
@@ -47,6 +48,12 @@ public class MysqlProductRepositoryAdapter implements ProductRepository {
     @Transactional(readOnly = true)
     public Optional<Product> findById(String identifier) {
         return jpaRepository.findById(identifier).map(this::toDomain);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<Product> findBySellerId(String sellerId) {
+        return jpaRepository.findBySellerId(sellerId).stream().map(this::toDomain).toList();
     }
 
     private void updateEntity(ProductEntity existing, Product product) {

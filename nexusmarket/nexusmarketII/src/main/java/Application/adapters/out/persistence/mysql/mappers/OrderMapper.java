@@ -2,10 +2,15 @@ package Application.adapters.out.persistence.mysql.mappers;
 
 import Application.adapters.out.persistence.mysql.entities.OrderEntity;
 import Application.adapters.out.persistence.mysql.entities.OrderItemEntity;
+import Application.domain.enums.ShipmentStatus;
 import Application.domain.models.Buyer;
+import Application.domain.models.LogisticsOperator;
 import Application.domain.models.Order;
 import Application.domain.models.OrderItem;
+import Application.domain.models.Person;
 import Application.domain.models.Product;
+import Application.domain.models.Shipment;
+import Application.domain.models.Warehouse;
 import Application.domain.valueobjects.OrderStatus;
 
 import java.util.ArrayList;
@@ -31,8 +36,14 @@ public final class OrderMapper {
         applyOrder(entity, order);
     }
 
+    /**
+     * @param personResolver    resolves the logistics operator of the shipment
+     * @param warehouseResolver resolves the origin warehouse of the shipment
+     */
     public static Order toDomain(OrderEntity entity, Buyer buyer,
-                                 Function<String, Product> productResolver) {
+                                 Function<String, Product> productResolver,
+                                 Function<String, Person> personResolver,
+                                 Function<String, Warehouse> warehouseResolver) {
         List<OrderItem> items = new ArrayList<>();
         for (OrderItemEntity itemEntity : entity.getItems()) {
             Product product = productResolver.apply(itemEntity.getProductId());
@@ -41,9 +52,22 @@ public final class OrderMapper {
         Order.InvoiceSnapshot invoiceSnapshot = entity.getInvoiceId() == null ? null
                 : new Order.InvoiceSnapshot(entity.getInvoiceId(), entity.getInvoiceIssueDate(),
                         entity.getInvoiceTotalAmount(), entity.getInvoiceTaxAmount());
-        return Order.reconstruct(entity.getOrderId(), buyer, items,
+        Order order = Order.reconstruct(entity.getOrderId(), buyer, items,
                 OrderStatus.fromCode(entity.getOrderStatusCode()), entity.getCreationDate(),
                 invoiceSnapshot);
+        if (entity.getShipmentId() != null) {
+            Person operator = personResolver.apply(entity.getShipmentOperatorId());
+            if (!(operator instanceof LogisticsOperator logisticsOperator)) {
+                throw new IllegalStateException("Shipment '" + entity.getShipmentId()
+                        + "' must be assigned to a LogisticsOperator");
+            }
+            Shipment.reconstruct(entity.getShipmentId(), order, logisticsOperator,
+                    warehouseResolver.apply(entity.getShipmentOriginWarehouseId()),
+                    PersonMapper.toAddress(entity.getShippingAddress()),
+                    ShipmentStatus.valueOf(entity.getShipmentStatusCode()),
+                    entity.getShipmentDispatchDate(), entity.getShipmentDeliveryDate());
+        }
+        return order;
     }
 
     private static void applyOrder(OrderEntity entity, Order order) {
@@ -56,6 +80,16 @@ public final class OrderMapper {
             entity.setInvoiceIssueDate(order.getInvoice().getIssueDate());
             entity.setInvoiceTotalAmount(order.getInvoice().getTotalAmount());
             entity.setInvoiceTaxAmount(order.getInvoice().getTaxAmount());
+        }
+        Shipment shipment = order.getShipment();
+        if (shipment != null) {
+            entity.setShipmentId(shipment.getShipmentId());
+            entity.setShipmentOperatorId(shipment.getLogisticsOperator().getIdentifier());
+            entity.setShipmentOriginWarehouseId(shipment.getOriginWarehouse().getIdentifier());
+            entity.setShippingAddress(PersonMapper.toEmbeddable(shipment.getShippingAddress()));
+            entity.setShipmentStatusCode(shipment.getShipmentStatus().name());
+            entity.setShipmentDispatchDate(shipment.getDispatchDate());
+            entity.setShipmentDeliveryDate(shipment.getDeliveryDate());
         }
         entity.getItems().clear();
         for (OrderItem item : order.getItems()) {

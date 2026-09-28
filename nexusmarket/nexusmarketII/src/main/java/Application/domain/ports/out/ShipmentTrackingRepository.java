@@ -1,6 +1,9 @@
 package Application.domain.ports.out;
 
+import Application.domain.models.ShipmentTrackingEvent;
+
 import java.time.LocalDateTime;
+import java.util.List;
 
 /**
  * Output port: persistence contract for shipment tracking events
@@ -18,4 +21,9 @@ public interface ShipmentTrackingRepository {
      * @param details    human-readable details of the event
      */
     void record(String shipmentId, String orderId, String event, LocalDateTime occurredAt, String details);
+
+    /**
+     * @return the tracking history of a shipment, oldest event first
+     */
+    List<ShipmentTrackingEvent> findByShipmentId(String shipmentId);
 }

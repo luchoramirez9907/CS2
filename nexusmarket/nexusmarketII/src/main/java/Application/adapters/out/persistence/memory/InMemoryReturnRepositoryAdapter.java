@@ -5,6 +5,7 @@ import Application.domain.ports.out.ReturnRepository;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
 import java.util.Optional;
 
 /**
@@ -28,5 +29,17 @@ public class InMemoryReturnRepositoryAdapter implements ReturnRepository {
     @Override
     public Optional<Return> findById(String returnId) {
         return Optional.ofNullable(store.returns.get(returnId));
+    }
+
+    @Override
+    public List<Return> findByBuyerId(String buyerId) {
+        return store.returns.values().stream()
+                .filter(returnRequest -> returnRequest.getBuyer().getIdentifier().equals(buyerId))
+                .toList();
+    }
+
+    @Override
+    public List<Return> findAll() {
+        return List.copyOf(store.returns.values());
     }
 }

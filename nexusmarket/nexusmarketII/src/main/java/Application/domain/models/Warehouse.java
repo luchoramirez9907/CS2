@@ -17,8 +17,8 @@ import java.util.List;
 public abstract class Warehouse {
 
     private final String identifier;
-    private final String name;
-    private final Address address;
+    private String name;
+    private Address address;
     private final List<Inventory> inventoryRecords = new ArrayList<>();
 
     protected Warehouse(String identifier, String name, Address address) {
@@ -46,6 +46,21 @@ public abstract class Warehouse {
 
     public Address getAddress() {
         return address;
+    }
+
+    /**
+     * Updates the descriptive information of the warehouse. Ownership
+     * (Marketplace or Seller) never changes.
+     */
+    public void updateInformation(String name, Address address) {
+        if (name == null || name.isBlank()) {
+            throw new IllegalArgumentException("Warehouse name must not be null or blank");
+        }
+        if (address == null) {
+            throw new IllegalArgumentException("Warehouse address must not be null");
+        }
+        this.name = name;
+        this.address = address;
     }
 
     public List<Inventory> getInventoryRecords() {

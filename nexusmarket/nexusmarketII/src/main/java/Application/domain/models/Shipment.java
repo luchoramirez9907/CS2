@@ -79,7 +79,10 @@ public class Shipment {
         this.dispatchDate = LocalDateTime.now();
     }
 
-    /** Marks the shipment as delivered and completes the order lifecycle. */
+    /**
+     * Confirms the delivery of the shipment to the buyer. The order is
+     * finalized afterward through its own lifecycle (Order#finalizeOrder).
+     */
     public void markDelivered() {
         if (shipmentStatus != ShipmentStatus.IN_TRANSIT) {
             throw new IllegalArgumentException("Shipment '" + shipmentId
@@ -87,7 +90,6 @@ public class Shipment {
         }
         this.shipmentStatus = ShipmentStatus.DELIVERED;
         this.deliveryDate = LocalDateTime.now();
-        order.markDelivered();
     }
 
     /** Marks the shipment as returned to the origin warehouse. */
@@ -97,5 +99,23 @@ public class Shipment {
                     + "' is not in transit (status: " + shipmentStatus + ")");
         }
         this.shipmentStatus = ShipmentStatus.RETURNED;
+    }
+
+    /**
+     * Rebuilds a persisted shipment and links it to its order without
+     * re-applying lifecycle validations. Used exclusively by persistence
+     * mappers.
+     */
+    public static Shipment reconstruct(String shipmentId, Order order, LogisticsOperator logisticsOperator,
+                                       Warehouse originWarehouse, Address shippingAddress,
+                                       ShipmentStatus shipmentStatus, LocalDateTime dispatchDate,
+                                       LocalDateTime deliveryDate) {
+        Shipment shipment = new Shipment(shipmentId, order, logisticsOperator, originWarehouse,
+                shippingAddress);
+        shipment.shipmentStatus = shipmentStatus;
+        shipment.dispatchDate = dispatchDate;
+        shipment.deliveryDate = deliveryDate;
+        order.restoreShipment(shipment);
+        return shipment;
     }
 }

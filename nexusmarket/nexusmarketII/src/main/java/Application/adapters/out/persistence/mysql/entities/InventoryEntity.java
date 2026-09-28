@@ -34,4 +34,7 @@ public class InventoryEntity {
 
     @Column(name = "reserved_quantity", nullable = false)
     private int reservedQuantity;
+
+    @Column(name = "damaged_quantity", nullable = false, columnDefinition = "int default 0")
+    private int damagedQuantity;
 }

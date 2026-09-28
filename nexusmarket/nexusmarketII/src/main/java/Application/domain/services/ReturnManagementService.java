@@ -1,17 +1,17 @@
 package Application.domain.services;
 
+import Application.domain.enums.BusinessOperation;
 import Application.domain.models.Administrator;
 import Application.domain.models.Buyer;
 import Application.domain.models.Order;
 import Application.domain.models.Person;
 import Application.domain.models.Return;
-import Application.domain.ports.in.ApproveReturnUseCase;
 import Application.domain.ports.in.RequestReturnUseCase;
+import Application.domain.ports.in.ResolveReturnUseCase;
 import Application.domain.ports.out.BuyerRepository;
 import Application.domain.ports.out.InventoryRepository;
 import Application.domain.ports.out.NotificationService;
 import Application.domain.ports.out.OrderRepository;
-import Application.domain.ports.out.PersonRepository;
 import Application.domain.ports.out.ReturnRepository;
 
 import java.time.LocalDateTime;
@@ -20,39 +20,39 @@ import java.util.UUID;
 /**
  * ReturnManagementService
  *
- * Implements RequestReturnUseCase and ApproveReturnUseCase. A Return can
+ * Implements RequestReturnUseCase and ResolveReturnUseCase. A Return can
  * only be requested against a delivered Order by its own buyer, and only
- * an Administrator may approve it. Completing a return reinstates the
- * returned stock (RETURN movement).
+ * an Administrator may approve or reject it. Completing a return
+ * reinstates the returned stock (RETURN movement).
  */
-public class ReturnManagementService implements RequestReturnUseCase, ApproveReturnUseCase {
+public class ReturnManagementService implements RequestReturnUseCase, ResolveReturnUseCase {
 
     private final BuyerRepository buyerRepository;
     private final OrderRepository orderRepository;
     private final ReturnRepository returnRepository;
-    private final PersonRepository personRepository;
     private final InventoryRepository inventoryRepository;
     private final InventoryReservationService inventoryReservationService;
+    private final AuthorizationService authorizationService;
     private final NotificationService notificationService;
 
     public ReturnManagementService(BuyerRepository buyerRepository,
                                    OrderRepository orderRepository,
                                    ReturnRepository returnRepository,
-                                   PersonRepository personRepository,
                                    InventoryRepository inventoryRepository,
                                    InventoryReservationService inventoryReservationService,
+                                   AuthorizationService authorizationService,
                                    NotificationService notificationService) {
         if (buyerRepository == null || orderRepository == null || returnRepository == null
-                || personRepository == null || inventoryRepository == null
-                || inventoryReservationService == null || notificationService == null) {
+                || inventoryRepository == null || inventoryReservationService == null
+                || authorizationService == null || notificationService == null) {
             throw new IllegalArgumentException("ReturnManagementService requires its dependencies");
         }
         this.buyerRepository = buyerRepository;
         this.orderRepository = orderRepository;
         this.returnRepository = returnRepository;
-        this.personRepository = personRepository;
         this.inventoryRepository = inventoryRepository;
         this.inventoryReservationService = inventoryReservationService;
+        this.authorizationService = authorizationService;
         this.notificationService = notificationService;
     }
 
@@ -79,22 +79,44 @@ public class ReturnManagementService implements RequestReturnUseCase, ApproveRet
 
     @Override
     public Return approveReturn(String administratorId, String returnId) {
-        requireText(administratorId, "administrator id");
         requireText(returnId, "return id");
+        Person approver = authorizationService.requirePermission(administratorId,
+                BusinessOperation.RESOLVE_RETURN);
 
-        Person approver = personRepository.findById(administratorId)
-                .orElseThrow(() -> new IllegalArgumentException(
-                        "Person '" + administratorId + "' does not exist"));
-        approver.requireActive();
-        approver.requireRole("approve a Return", Application.domain.valueobjects.SystemRole.ADMINISTRATOR);
-
-        Return returnRequest = returnRepository.findById(returnId)
-                .orElseThrow(() -> new IllegalArgumentException("Return '" + returnId + "' does not exist"));
+        Return returnRequest = findReturn(returnId);
         returnRequest.approve((Administrator) approver);
         returnRepository.save(returnRequest);
         notificationService.notify(returnRequest.getBuyer(), "Return approved",
                 "Return " + returnId + " was approved and a refund may now be processed");
         return returnRequest;
+    }
+
+    @Override
+    public Return rejectReturn(String administratorId, String returnId) {
+        requireText(returnId, "return id");
+        authorizationService.requirePermission(administratorId, BusinessOperation.RESOLVE_RETURN);
+
+        Return returnRequest = findReturn(returnId);
+        returnRequest.reject();
+        returnRepository.save(returnRequest);
+        notificationService.notify(returnRequest.getBuyer(), "Return rejected",
+                "Return " + returnId + " was rejected");
+        return returnRequest;
+    }
+
+    @Override
+    public Return consultReturn(String requesterId, String returnId) {
+        requireText(returnId, "return id");
+        Person requester = authorizationService.requirePermission(requesterId,
+                BusinessOperation.CONSULT_RETURN);
+        Return returnRequest = findReturn(returnId);
+        authorizationService.requireOrderAccess(requester, returnRequest.getOrder());
+        return returnRequest;
+    }
+
+    private Return findReturn(String returnId) {
+        return returnRepository.findById(returnId)
+                .orElseThrow(() -> new IllegalArgumentException("Return '" + returnId + "' does not exist"));
     }
 
     /**
@@ -103,8 +125,7 @@ public class ReturnManagementService implements RequestReturnUseCase, ApproveRet
      */
     public Return completeReturn(String returnId, Person performedBy) {
         requireText(returnId, "return id");
-        Return returnRequest = returnRepository.findById(returnId)
-                .orElseThrow(() -> new IllegalArgumentException("Return '" + returnId + "' does not exist"));
+        Return returnRequest = findReturn(returnId);
         returnRequest.complete();
 
         Order order = returnRequest.getOrder();

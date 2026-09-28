@@ -1,11 +1,11 @@
 package Application.domain.services;
 
+import Application.domain.enums.BusinessOperation;
 import Application.domain.models.Person;
 import Application.domain.models.Refund;
 import Application.domain.models.Return;
 import Application.domain.ports.in.ProcessRefundUseCase;
 import Application.domain.ports.out.NotificationService;
-import Application.domain.ports.out.PersonRepository;
 import Application.domain.ports.out.ReturnRepository;
 
 import java.math.BigDecimal;
@@ -17,45 +17,37 @@ import java.util.UUID;
  *
  * Implements the ProcessRefundUseCase. A Refund can only be generated
  * from an approved Return and must be approved by an Administrator or a
- * Supervisor. By default the reimbursed amount is the total of the order.
+ * Supervisor. By default the reimbursed amount is the total of the order,
+ * and it can never exceed it.
  */
 public class RefundProcessingService implements ProcessRefundUseCase {
 
     private final ReturnRepository returnRepository;
-    private final PersonRepository personRepository;
+    private final AuthorizationService authorizationService;
     private final NotificationService notificationService;
 
     public RefundProcessingService(ReturnRepository returnRepository,
-                                   PersonRepository personRepository,
+                                   AuthorizationService authorizationService,
                                    NotificationService notificationService) {
-        if (returnRepository == null || personRepository == null || notificationService == null) {
+        if (returnRepository == null || authorizationService == null || notificationService == null) {
             throw new IllegalArgumentException("RefundProcessingService requires its dependencies");
         }
         this.returnRepository = returnRepository;
-        this.personRepository = personRepository;
+        this.authorizationService = authorizationService;
         this.notificationService = notificationService;
     }
 
     @Override
     public Refund processRefund(String approverId, String returnId, BigDecimal amount) {
-        if (approverId == null || approverId.isBlank()) {
-            throw new IllegalArgumentException("Approver id must not be null or blank");
+        Person approver = authorizationService.requirePermission(approverId, BusinessOperation.PROCESS_REFUND);
+        Return returnRequest = findReturn(returnId);
+
+        BigDecimal orderTotal = returnRequest.getOrder().getTotalAmount();
+        BigDecimal refundAmount = amount == null ? orderTotal : amount;
+        if (refundAmount.compareTo(orderTotal) > 0) {
+            throw new IllegalArgumentException("Refund amount " + refundAmount
+                    + " exceeds the order total " + orderTotal);
         }
-        if (returnId == null || returnId.isBlank()) {
-            throw new IllegalArgumentException("Return id must not be null or blank");
-        }
-
-        Person approver = personRepository.findById(approverId)
-                .orElseThrow(() -> new IllegalArgumentException(
-                        "Person '" + approverId + "' does not exist"));
-        approver.requireActive();
-
-        Return returnRequest = returnRepository.findById(returnId)
-                .orElseThrow(() -> new IllegalArgumentException("Return '" + returnId + "' does not exist"));
-
-        BigDecimal refundAmount = amount == null
-                ? returnRequest.getOrder().getTotalAmount()
-                : amount;
 
         Refund refund = Refund.issueFor(returnRequest, refundAmount, approver,
                 UUID.randomUUID().toString(), LocalDateTime.now());
@@ -65,5 +57,22 @@ public class RefundProcessingService implements ProcessRefundUseCase {
         notificationService.notify(returnRequest.getBuyer(), "Refund processed",
                 "A refund of " + refundAmount + " was processed for return " + returnId);
         return refund;
+    }
+
+    @Override
+    public Refund consultRefund(String requesterId, String returnId) {
+        Person requester = authorizationService.requirePermission(requesterId, BusinessOperation.CONSULT_REFUND);
+        Return returnRequest = findReturn(returnId);
+        authorizationService.requireBuyerAccess(requester, returnRequest.getBuyer());
+        if (returnRequest.getRefund() == null) {
+            throw new IllegalArgumentException("Return '" + returnId + "' has no refund");
+        }
+        return returnRequest.getRefund();
+    }
+
+    private Return findReturn(String returnId) {
+        ServiceValidations.requireText(returnId, "return id");
+        return returnRepository.findById(returnId)
+                .orElseThrow(() -> new IllegalArgumentException("Return '" + returnId + "' does not exist"));
     }
 }

@@ -37,4 +37,17 @@ public class InMemoryInventoryRepositoryAdapter implements InventoryRepository {
                 .filter(inventory -> inventory.getProduct().getIdentifier().equals(productId))
                 .toList();
     }
+
+    @Override
+    public Optional<Inventory> findByProductIdAndWarehouseId(String productId, String warehouseId) {
+        return store.inventories.values().stream()
+                .filter(inventory -> inventory.getProduct().getIdentifier().equals(productId)
+                        && inventory.getWarehouse().getIdentifier().equals(warehouseId))
+                .findFirst();
+    }
+
+    @Override
+    public List<Inventory> findAll() {
+        return List.copyOf(store.inventories.values());
+    }
 }

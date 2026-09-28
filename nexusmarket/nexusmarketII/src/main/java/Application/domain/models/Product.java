@@ -17,8 +17,8 @@ import java.util.List;
 public abstract class Product {
 
     private final String identifier;
-    private final String name;
-    private final String description;
+    private String name;
+    private String description;
     private final List<ProductVariant> variants = new ArrayList<>();
     private ProductStatus status;
     private final Seller seller;
@@ -74,11 +74,58 @@ public abstract class Product {
         return status;
     }
 
+    /**
+     * Changes the catalog status. DISCONTINUED is permanent: a discontinued
+     * product can never return to the catalog.
+     */
     public void changeStatus(ProductStatus status) {
         if (status == null) {
             throw new IllegalArgumentException("Product status must not be null");
         }
+        if (this.status == ProductStatus.DISCONTINUED && status != ProductStatus.DISCONTINUED) {
+            throw new IllegalArgumentException("Product '" + identifier
+                    + "' is permanently discontinued and cannot change its status");
+        }
         this.status = status;
+    }
+
+    public boolean isDiscontinued() {
+        return status == ProductStatus.DISCONTINUED;
+    }
+
+    /**
+     * Updates the descriptive information of the product. A discontinued
+     * product can no longer be modified.
+     */
+    public void updateInformation(String name, String description) {
+        requireNotDiscontinued();
+        if (name == null || name.isBlank()) {
+            throw new IllegalArgumentException("Product name must not be null or blank");
+        }
+        this.name = name;
+        this.description = description;
+    }
+
+    /**
+     * Replaces every variant of the product with the given ones.
+     */
+    public void replaceVariants(List<ProductVariant> newVariants) {
+        requireNotDiscontinued();
+        if (newVariants == null) {
+            throw new IllegalArgumentException("Variants must not be null");
+        }
+        List<ProductVariant> replacement = new ArrayList<>(newVariants);
+        this.variants.clear();
+        for (ProductVariant variant : replacement) {
+            addVariant(variant.getName(), variant.getValue());
+        }
+    }
+
+    private void requireNotDiscontinued() {
+        if (isDiscontinued()) {
+            throw new IllegalArgumentException("Product '" + identifier
+                    + "' is discontinued and cannot be modified");
+        }
     }
 
     /**

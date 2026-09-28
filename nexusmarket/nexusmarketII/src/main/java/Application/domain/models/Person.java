@@ -22,8 +22,8 @@ import java.util.Objects;
 public abstract class Person {
 
     private final String identifier;
-    private final String fullName;
-    private final String email;
+    private String fullName;
+    private String email;
     private final SystemRole role;
     private UserStatus status;
 
@@ -31,12 +31,8 @@ public abstract class Person {
         if (identifier == null || identifier.isBlank()) {
             throw new IllegalArgumentException("Person identifier must not be null or blank");
         }
-        if (fullName == null || fullName.isBlank()) {
-            throw new IllegalArgumentException("Person full name must not be null or blank");
-        }
-        if (email == null || !email.contains("@")) {
-            throw new IllegalArgumentException("Person email must be a valid address");
-        }
+        requireValidFullName(fullName);
+        requireValidEmail(email);
         if (role == null) {
             throw new IllegalArgumentException("Person role must not be null (RG-02)");
         }
@@ -81,6 +77,37 @@ public abstract class Person {
 
     public void block() {
         this.status = UserStatus.BLOCKED;
+    }
+
+    public void changeStatus(UserStatus status) {
+        if (status == null) {
+            throw new IllegalArgumentException("Person status must not be null");
+        }
+        this.status = status;
+    }
+
+    /**
+     * Updates the identity and contact information of the person. The
+     * identifier and role never change (RG-02). Email uniqueness across
+     * the platform is validated by the calling service.
+     */
+    public void updateContactInformation(String fullName, String email) {
+        requireValidFullName(fullName);
+        requireValidEmail(email);
+        this.fullName = fullName;
+        this.email = email;
+    }
+
+    private static void requireValidFullName(String fullName) {
+        if (fullName == null || fullName.isBlank()) {
+            throw new IllegalArgumentException("Person full name must not be null or blank");
+        }
+    }
+
+    private static void requireValidEmail(String email) {
+        if (email == null || !email.contains("@")) {
+            throw new IllegalArgumentException("Person email must be a valid address");
+        }
     }
 
     /**

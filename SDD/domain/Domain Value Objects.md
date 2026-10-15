@@ -57,6 +57,7 @@ This class cannot be instantiated directly.
 * Catalog values are controlled by the domain.
 * Catalog values must not be represented by arbitrary strings throughout the application.
 * Each catalog value must have a unique `code`.
+* Every concrete catalog exposes its values as constants, plus `fromCode(String)` (which rejects unknown codes) and `values()`, so external representations (REST, database) are always converted back into a controlled value.
 
 ---
 
@@ -164,9 +165,13 @@ Movements provide traceability of stock changes independently from the current a
 | -------------- | -------------- | ------------------------------------------------------------------ |
 | STOCK_IN        | Stock In        | Incoming stock registered into a warehouse.                          |
 | RESERVATION     | Reservation     | Stock reserved as a result of an active shopping cart or order.       |
+| RESERVATION_RELEASE | Reservation Release | Previously reserved stock returned to the available stock.   |
 | SALE_EXIT       | Sale Exit       | Stock removed from inventory as a result of a completed sale.         |
 | ADJUSTMENT      | Adjustment      | Manual correction of the recorded stock quantity.                     |
 | RETURN          | Return          | Stock reinstated as a result of a product return.                     |
+| DAMAGE          | Damage          | Available stock marked as damaged; damaged stock can never be reserved. |
+
+Every change to an inventory record generates exactly one movement, and each kind of change uses its own movement type. Movement quantities are always positive; the type determines the direction of the change (except `ADJUSTMENT`, which carries a signed correction).
 
 ---
 
@@ -255,6 +260,22 @@ RETURNED
 
 ---
 
+# TrackingEventType
+
+## Description
+
+Represents the type of step recorded in the tracking history of a shipment (`ShipmentTrackingEvent.event`).
+
+## Values
+
+```text
+CREATED
+DISPATCHED
+DELIVERED
+```
+
+---
+
 # ReturnStatus
 
 ## Description
@@ -284,6 +305,34 @@ Represents the technical processing state of a refund.
 PENDING
 PROCESSED
 REJECTED
+```
+
+---
+
+# BusinessOperation
+
+## Description
+
+Enumerates the business operations exposed by the service catalog. The Authorization services use it to decide whether a person may perform an operation according to its role (RG-02 / RG-03). Each value carries a short human-readable `description` used in error messages.
+
+The complete permission matrix (operation → allowed roles) is documented in `Services.md`, section *Permission Matrix*.
+
+## Values
+
+```text
+REGISTER_USER, CONSULT_USER, UPDATE_USER, CHANGE_USER_STATUS
+REGISTER_SELLER, CONSULT_SELLER, UPDATE_SELLER, CHANGE_SELLER_STATUS
+REGISTER_BUYER, CONSULT_BUYER, UPDATE_BUYER, CHANGE_BUYER_COMMERCIAL_STATUS
+REGISTER_WAREHOUSE, CONSULT_WAREHOUSE, UPDATE_WAREHOUSE
+PUBLISH_PRODUCT, CONSULT_PRODUCT, UPDATE_PRODUCT, CHANGE_PRODUCT_STATUS
+REGISTER_INVENTORY_MOVEMENT, CONSULT_INVENTORY
+MANAGE_CART, CONSULT_CART
+CONFIRM_ORDER, CONFIRM_ORDER_PAYMENT, FINALIZE_ORDER, CONSULT_ORDER
+GENERATE_INVOICE, CONSULT_INVOICE
+CREATE_SHIPMENT, UPDATE_SHIPMENT_STATUS, CONSULT_SHIPMENT
+REQUEST_RETURN, RESOLVE_RETURN, CONSULT_RETURN
+PROCESS_REFUND, CONSULT_REFUND
+CONSULT_COMMERCIAL_REPORT, CONSULT_SELLER_PERFORMANCE_REPORT
 ```
 
 ---

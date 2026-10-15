@@ -1,0 +1,305 @@
+{
+  "info": {
+    "name": "NexusMarket API",
+    "description": "Flujo completo de NexusMarket: login por rol, compra, pago, envío, entrega, factura, devolución y reembolso, más ejemplos de errores. Antes de empezar, escribe la contraseña de las cuentas demo en la variable demoPassword (está en application.properties, propiedad nexusmarket.demo.password). Ejecuta las carpetas en orden: cada login guarda su token y el checkout guarda orderId.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:8080/api/v1" },
+    { "key": "demoPassword", "value": "" },
+    { "key": "buyerToken", "value": "" },
+    { "key": "adminToken", "value": "" },
+    { "key": "operatorToken", "value": "" },
+    { "key": "sellerToken", "value": "" },
+    { "key": "supervisorToken", "value": "" },
+    { "key": "orderId", "value": "" },
+    { "key": "returnId", "value": "" }
+  ],
+  "item": [
+    {
+      "name": "0. Público (sin token)",
+      "item": [
+        {
+          "name": "Salud de la API",
+          "request": { "method": "GET", "url": "http://localhost:8080/actuator/health" }
+        },
+        {
+          "name": "Buscar en el catálogo",
+          "request": { "method": "GET", "url": "{{baseUrl}}/public/products?q=keyboard" }
+        },
+        {
+          "name": "Ver un producto",
+          "request": { "method": "GET", "url": "{{baseUrl}}/public/products/product-1" }
+        }
+      ]
+    },
+    {
+      "name": "1. Login (guarda los tokens)",
+      "item": [
+        {
+          "name": "Login comprador",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('200 OK', () => pm.response.to.have.status(200));",
+            "pm.collectionVariables.set('buyerToken', pm.response.json().data.token);"
+          ] } }],
+          "request": {
+            "method": "POST", "url": "{{baseUrl}}/auth/login",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"email\": \"buyer@nexusmarket.com\",\n  \"password\": \"{{demoPassword}}\"\n}" }
+          }
+        },
+        {
+          "name": "Login administrador",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('200 OK', () => pm.response.to.have.status(200));",
+            "pm.collectionVariables.set('adminToken', pm.response.json().data.token);"
+          ] } }],
+          "request": {
+            "method": "POST", "url": "{{baseUrl}}/auth/login",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"email\": \"admin@nexusmarket.com\",\n  \"password\": \"{{demoPassword}}\"\n}" }
+          }
+        },
+        {
+          "name": "Login operador logístico",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('200 OK', () => pm.response.to.have.status(200));",
+            "pm.collectionVariables.set('operatorToken', pm.response.json().data.token);"
+          ] } }],
+          "request": {
+            "method": "POST", "url": "{{baseUrl}}/auth/login",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"email\": \"operator@nexusmarket.com\",\n  \"password\": \"{{demoPassword}}\"\n}" }
+          }
+        },
+        {
+          "name": "Login vendedor",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('200 OK', () => pm.response.to.have.status(200));",
+            "pm.collectionVariables.set('sellerToken', pm.response.json().data.token);"
+          ] } }],
+          "request": {
+            "method": "POST", "url": "{{baseUrl}}/auth/login",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"email\": \"seller@nexusmarket.com\",\n  \"password\": \"{{demoPassword}}\"\n}" }
+          }
+        },
+        {
+          "name": "Login supervisor",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('200 OK', () => pm.response.to.have.status(200));",
+            "pm.collectionVariables.set('supervisorToken', pm.response.json().data.token);"
+          ] } }],
+          "request": {
+            "method": "POST", "url": "{{baseUrl}}/auth/login",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"email\": \"supervisor@nexusmarket.com\",\n  \"password\": \"{{demoPassword}}\"\n}" }
+          }
+        }
+      ]
+    },
+    {
+      "name": "2. Compra (comprador)",
+      "item": [
+        {
+          "name": "Agregar al carrito",
+          "request": {
+            "method": "POST", "url": "{{baseUrl}}/buyer/cart/items",
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{buyerToken}}" }] },
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"productId\": \"product-1\",\n  \"quantity\": 2\n}" }
+          }
+        },
+        {
+          "name": "Ver mi carrito",
+          "request": {
+            "method": "GET", "url": "{{baseUrl}}/buyer/cart",
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{buyerToken}}" }] }
+          }
+        },
+        {
+          "name": "Confirmar pedido (checkout)",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('201 Created', () => pm.response.to.have.status(201));",
+            "pm.collectionVariables.set('orderId', pm.response.json().data.orderId);"
+          ] } }],
+          "request": {
+            "method": "POST", "url": "{{baseUrl}}/buyer/orders",
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{buyerToken}}" }] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "3. Pago (administrador)",
+      "item": [
+        {
+          "name": "Confirmar pago",
+          "request": {
+            "method": "POST", "url": "{{baseUrl}}/admin/orders/{{orderId}}/payment",
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{adminToken}}" }] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "4. Envío y entrega (operador logístico)",
+      "item": [
+        {
+          "name": "Crear envío",
+          "request": {
+            "method": "POST", "url": "{{baseUrl}}/operator/orders/{{orderId}}/shipment",
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{operatorToken}}" }] },
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"originWarehouseId\": \"warehouse-1\"\n}" }
+          }
+        },
+        {
+          "name": "Despachar envío",
+          "request": {
+            "method": "POST", "url": "{{baseUrl}}/operator/orders/{{orderId}}/shipment/dispatch",
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{operatorToken}}" }] }
+          }
+        },
+        {
+          "name": "Confirmar entrega",
+          "request": {
+            "method": "POST", "url": "{{baseUrl}}/operator/orders/{{orderId}}/shipment/delivery",
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{operatorToken}}" }] }
+          }
+        },
+        {
+          "name": "Finalizar pedido",
+          "request": {
+            "method": "POST", "url": "{{baseUrl}}/operator/orders/{{orderId}}/finalization",
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{operatorToken}}" }] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "5. Consultas del comprador",
+      "item": [
+        {
+          "name": "Ver mi pedido",
+          "request": {
+            "method": "GET", "url": "{{baseUrl}}/buyer/orders/{{orderId}}",
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{buyerToken}}" }] }
+          }
+        },
+        {
+          "name": "Ver factura (IVA incluido)",
+          "request": {
+            "method": "GET", "url": "{{baseUrl}}/buyer/orders/{{orderId}}/invoice",
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{buyerToken}}" }] }
+          }
+        },
+        {
+          "name": "Ver rastreo del envío",
+          "request": {
+            "method": "GET", "url": "{{baseUrl}}/buyer/orders/{{orderId}}/tracking",
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{buyerToken}}" }] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "6. Devolución y reembolso",
+      "item": [
+        {
+          "name": "Solicitar devolución (comprador)",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('201 Created', () => pm.response.to.have.status(201));",
+            "pm.collectionVariables.set('returnId', pm.response.json().data.returnId);"
+          ] } }],
+          "request": {
+            "method": "POST", "url": "{{baseUrl}}/buyer/orders/{{orderId}}/returns",
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{buyerToken}}" }] },
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"reason\": \"Llegó con una tecla dañada\"\n}" }
+          }
+        },
+        {
+          "name": "Aprobar devolución (admin)",
+          "request": {
+            "method": "POST", "url": "{{baseUrl}}/admin/returns/{{returnId}}/approval",
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{adminToken}}" }] }
+          }
+        },
+        {
+          "name": "Procesar reembolso (admin)",
+          "request": {
+            "method": "POST", "url": "{{baseUrl}}/admin/returns/{{returnId}}/refund",
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{adminToken}}" }] }
+          }
+        },
+        {
+          "name": "Completar devolución: reingresa stock (admin)",
+          "request": {
+            "method": "POST", "url": "{{baseUrl}}/admin/returns/{{returnId}}/completion",
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{adminToken}}" }] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "7. Reportes e inventario",
+      "item": [
+        {
+          "name": "Reporte comercial (supervisor)",
+          "request": {
+            "method": "GET", "url": "{{baseUrl}}/supervisor/reports/commercial",
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{supervisorToken}}" }] }
+          }
+        },
+        {
+          "name": "Mi reporte de desempeño (vendedor)",
+          "request": {
+            "method": "GET", "url": "{{baseUrl}}/seller/reports/performance",
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{sellerToken}}" }] }
+          }
+        },
+        {
+          "name": "Historial de movimientos de inventario (vendedor)",
+          "request": {
+            "method": "GET", "url": "{{baseUrl}}/seller/inventory/movements?productId=product-1&warehouseId=warehouse-1",
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{sellerToken}}" }] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "8. Errores (para mostrar la seguridad)",
+      "item": [
+        {
+          "name": "Sin token -> 401",
+          "event": [{ "listen": "test", "script": { "exec": ["pm.test('401', () => pm.response.to.have.status(401));"] } }],
+          "request": { "method": "GET", "url": "{{baseUrl}}/buyer/profile" }
+        },
+        {
+          "name": "Comprador en ruta de admin -> 403",
+          "event": [{ "listen": "test", "script": { "exec": ["pm.test('403', () => pm.response.to.have.status(403));"] } }],
+          "request": {
+            "method": "GET", "url": "{{baseUrl}}/admin/users",
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{buyerToken}}" }] }
+          }
+        },
+        {
+          "name": "Estado inválido -> 400",
+          "event": [{ "listen": "test", "script": { "exec": ["pm.test('400', () => pm.response.to.have.status(400));"] } }],
+          "request": {
+            "method": "PATCH", "url": "{{baseUrl}}/admin/users/operator-1/status",
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{adminToken}}" }] },
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"status\": \"active\"\n}" }
+          }
+        },
+        {
+          "name": "Producto inexistente -> 404",
+          "event": [{ "listen": "test", "script": { "exec": ["pm.test('404', () => pm.response.to.have.status(404));"] } }],
+          "request": { "method": "GET", "url": "{{baseUrl}}/public/products/no-existe" }
+        }
+      ]
+    }
+  ]
+}

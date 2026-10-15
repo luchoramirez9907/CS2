@@ -1,0 +1,90 @@
+package application.adapters.out.persistence.mysql.adapters;
+
+import application.adapters.out.persistence.mysql.entities.OrderEntity;
+import application.adapters.out.persistence.mysql.mappers.OrderMapper;
+import application.adapters.out.persistence.mysql.repositories.OrderJpaRepository;
+import application.domain.models.Buyer;
+import application.domain.models.Order;
+import application.domain.ports.out.BuyerRepository;
+import application.domain.ports.out.OrderRepository;
+import application.domain.ports.out.PersonRepository;
+import application.domain.ports.out.ProductRepository;
+import application.domain.ports.out.WarehouseRepository;
+import org.springframework.context.annotation.Profile;
+import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
+import java.util.Optional;
+
+/**
+ * MySQL persistence adapter for the OrderRepository output port
+ * (the order, its invoice and its shipment).
+ */
+@Repository
+@Profile("!memory")
+public class MysqlOrderRepositoryAdapter implements OrderRepository {
+
+    private final OrderJpaRepository jpaRepository;
+    private final BuyerRepository buyerRepository;
+    private final ProductRepository productRepository;
+    private final PersonRepository personRepository;
+    private final WarehouseRepository warehouseRepository;
+
+    public MysqlOrderRepositoryAdapter(OrderJpaRepository jpaRepository,
+                                       BuyerRepository buyerRepository,
+                                       ProductRepository productRepository,
+                                       PersonRepository personRepository,
+                                       WarehouseRepository warehouseRepository) {
+        this.jpaRepository = jpaRepository;
+        this.buyerRepository = buyerRepository;
+        this.productRepository = productRepository;
+        this.personRepository = personRepository;
+        this.warehouseRepository = warehouseRepository;
+    }
+
+    @Override
+    @Transactional
+    public void save(Order order) {
+        jpaRepository.findById(order.getOrderId()).ifPresentOrElse(
+                existing -> {
+                    OrderMapper.updateEntity(existing, order);
+                    jpaRepository.save(existing);
+                },
+                () -> jpaRepository.save(OrderMapper.toEntity(order)));
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Optional<Order> findById(String orderId) {
+        return jpaRepository.findById(orderId).map(this::toDomain);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<Order> findByBuyerId(String buyerId) {
+        return jpaRepository.findByBuyerId(buyerId).stream().map(this::toDomain).toList();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<Order> findAll() {
+        return jpaRepository.findAll().stream().map(this::toDomain).toList();
+    }
+
+    private Order toDomain(OrderEntity entity) {
+        Buyer buyer = buyerRepository.findById(entity.getBuyerId())
+                .orElseThrow(() -> new IllegalStateException("Buyer '" + entity.getBuyerId()
+                        + "' referenced by order does not exist"));
+        return OrderMapper.toDomain(entity, buyer,
+                productId -> productRepository.findById(productId)
+                        .orElseThrow(() -> new IllegalStateException("Product '" + productId
+                                + "' referenced by order does not exist")),
+                personId -> personRepository.findById(personId)
+                        .orElseThrow(() -> new IllegalStateException("Person '" + personId
+                                + "' referenced by shipment does not exist")),
+                warehouseId -> warehouseRepository.findById(warehouseId)
+                        .orElseThrow(() -> new IllegalStateException("Warehouse '" + warehouseId
+                                + "' referenced by shipment does not exist")));
+    }
+}

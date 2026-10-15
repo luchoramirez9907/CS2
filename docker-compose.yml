@@ -1,0 +1,67 @@
+services:
+  mysql-db:
+    image: mysql:8.0
+    container_name: nexusmarket-mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_DATABASE: nexusmarket
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-root_password}
+      MYSQL_USER: nexusmarket_app
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-nexusmarket_app_password}
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -uroot -p$${MYSQL_ROOT_PASSWORD} --silent"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  mongo-db:
+    image: mongo:6.0
+    container_name: nexusmarket-mongo
+    restart: unless-stopped
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/db
+    healthcheck:
+      test: ["CMD", "mongosh", "--quiet", "--eval", "db.adminCommand('ping').ok"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  nexusmarket-app:
+    build:
+      context: ./nexusmarket/nexusmarketII
+      dockerfile: Dockerfile
+    container_name: nexusmarket-app
+    restart: unless-stopped
+    working_dir: /workspace
+    volumes:
+      - ./nexusmarket/nexusmarketII:/workspace
+      - maven_cache:/root/.m2
+    ports:
+      - "${HOST_SERVER_PORT:-8080}:8080"
+    environment:
+      DB_URL: "${DB_URL:-jdbc:mysql://mysql-db:3306/nexusmarket?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC}"
+      DB_USERNAME: ${DB_USERNAME:-nexusmarket_app}
+      DB_PASSWORD: ${DB_PASSWORD:-${MYSQL_PASSWORD:-nexusmarket_app_password}}
+      MONGODB_URI: ${MONGODB_URI:-mongodb://mongo-db:27017/nexusmarket}
+      JWT_SECRET: ${JWT_SECRET:-NEXUSNEXUSNEXUSNEXUSNEXUSNEXUSNEXUS}
+      JWT_EXPIRATION_MS: ${JWT_EXPIRATION_MS:-3600000}
+      FRONTEND_ORIGIN: ${FRONTEND_ORIGIN:-http://localhost:5173}
+      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-demo}
+      SERVER_PORT: 8080
+    depends_on:
+      mysql-db:
+        condition: service_healthy
+      mongo-db:
+        condition: service_healthy
+    command: ["mvn", "-B", "spring-boot:run"]
+
+volumes:
+  mysql_data:
+  mongo_data:
+  maven_cache:

@@ -1,0 +1,18 @@
+# Build output
+target/
+*.class
+
+# Logs and local diagnostics
+*.log
+autoconf.txt
+ports.txt
+
+# IDE
+.idea/
+*.iml
+.vscode/*
+!.vscode/settings.json
+
+# OS
+.DS_Store
+Thumbs.db

@@ -16,6 +16,10 @@ Paquete: `adapters/security/`.
 | `SecurityErrorHandler` | Respuestas `401`/`403` con el mismo sobre de error de la API |
 | `RequestIdFilter` | Correlación `X-Request-Id` (también en el MDC del log) |
 
+## Rutas sin token
+
+Toda petición exige un token válido salvo dos: `POST /api/v1/auth/login`, que es la que entrega el token, y `POST /api/v1/public/buyers`, el registro de comprador que crea la cuenta. El catálogo y el health también piden token. `OPTIONS` (CORS) y `/error` quedan abiertos solo por razones técnicas y no devuelven datos.
+
 ## Decisión: token mínimo
 
 El token **solo lleva identidad** (persona y versión). El rol y el estado se leen del `User` vigente

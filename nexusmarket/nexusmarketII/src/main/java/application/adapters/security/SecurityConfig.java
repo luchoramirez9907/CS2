@@ -23,7 +23,9 @@ import java.util.List;
 
 /**
  * Security configuration: stateless JWT authentication and role-based
- * access control on the REST routes. Each route prefix belongs to exactly
+ * access control on the REST routes. Every request requires a valid token
+ * except the login (which issues it) and the buyer registration (which
+ * creates the account). Each route prefix belongs to exactly
  * one Role Input Port; the domain still enforces the fine-grained
  * permission and ownership rules (ValidatePermissionsService and
  * ValidateOwnershipAccessService).
@@ -50,11 +52,16 @@ public class SecurityConfig {
                         .authenticationEntryPoint(securityErrorHandler)
                         .accessDeniedHandler(securityErrorHandler))
                 .authorizeHttpRequests(auth -> auth
+                        // Only CORS preflight and the internal error page are open for technical reasons.
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
-                        .requestMatchers("/actuator/health", "/actuator/health/**").permitAll()
                         .requestMatchers("/error").permitAll()
+                        // The only business routes without token: login issues the token and the buyer
+                        // registration creates the account used to log in.
                         .requestMatchers(HttpMethod.POST, "/api/v1/auth/login").permitAll()
-                        .requestMatchers("/api/v1/public/**").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/v1/public/buyers").permitAll()
+                        // Every other request requires a valid token, including the catalog and health.
+                        .requestMatchers("/api/v1/public/**").authenticated()
+                        .requestMatchers("/actuator/**").authenticated()
                         .requestMatchers("/api/v1/auth/**").authenticated()
                         .requestMatchers("/api/v1/buyer/**").hasRole(SystemRole.BUYER.getCode())
                         .requestMatchers("/api/v1/seller/**").hasRole(SystemRole.SELLER.getCode())

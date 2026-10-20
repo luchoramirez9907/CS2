@@ -49,7 +49,7 @@ sequenceDiagram
     participant APP as nexusmarket-app :8080
     participant MY as MySQL
     participant MO as MongoDB
-    SPA->>APP: HTTP /api/v1/** + Bearer (salvo login, registro público y catálogo)
+    SPA->>APP: HTTP /api/v1/** + Bearer (salvo login y registro de comprador)
     APP->>APP: JwtAuthenticationFilter valida firma y vencimiento
     APP->>MY: LoadAuthenticatedUserService carga el User (activo y con versión de token vigente)
     APP->>APP: SecurityConfig autoriza por ROLE_* según el prefijo de la ruta

@@ -11,7 +11,7 @@ externos se comunica.
 C4Context
     title Contexto — NexusMarket
 
-    Person(publico, "Visitante", "Busca en el catálogo y se registra como comprador")
+    Person(publico, "Visitante", "Se registra como comprador y hace login (sin token)")
     Person(comprador, "Comprador (BUYER)", "Carrito, pedidos, facturas, devoluciones")
     Person(vendedor, "Vendedor (SELLER)", "Publica productos, maneja bodegas e inventario")
     Person(operador, "Operador logístico (LOGISTICS_OPERATOR)", "Crea, despacha y entrega envíos")
@@ -39,7 +39,7 @@ C4Context
 
 | Actor | Prefijo de rutas | Puerto de entrada | Ejemplos |
 |---|---|---|---|
-| Visitante | `/api/v1/public`, `/api/v1/auth` | `PublicAccessPort` | Buscar productos, registrarse, login |
+| Visitante | `/api/v1/public`, `/api/v1/auth` | `PublicAccessPort` | Registrarse y hacer login (las únicas peticiones sin token); con token, buscar en el catálogo |
 | Comprador | `/api/v1/buyer` | `BuyerPort` | Carrito, checkout, factura, devolución |
 | Vendedor | `/api/v1/seller` | `SellerPort` | Publicar producto, inventario, reporte de desempeño |
 | Operador logístico | `/api/v1/operator` | `LogisticsOperatorPort` | Crear, despachar y entregar envíos |

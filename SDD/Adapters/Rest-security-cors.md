@@ -18,12 +18,16 @@ This document defines the security boundary of the NexusMarket API: authenticati
 
 ## 3. Route Authorization
 
+**Every request requires a valid token** except the login (which issues the token) and the buyer registration (which creates the account); `OPTIONS` and `/error` are open only for technical reasons and return no business data.
+
 | Route | Rule |
 | ----- | ---- |
-| `OPTIONS /**` | Permitted (CORS preflight). |
-| `/actuator/health/**` | Permitted. |
-| `POST /api/v1/auth/login` | Permitted. |
-| `/api/v1/public/**` | Permitted. |
+| `OPTIONS /**` | Permitted (CORS preflight: browsers never send the token on it). |
+| `/error` | Permitted (internal error page used to write error responses). |
+| `POST /api/v1/auth/login` | Permitted: it is the request that issues the token. |
+| `POST /api/v1/public/buyers` | Permitted: buyer self-registration creates the account used to log in. |
+| `/api/v1/public/**` (catalog search and product) | Any authenticated role. |
+| `/actuator/**` (health) | Any authenticated role. |
 | `/api/v1/auth/**` (logout, password) | Any authenticated role. |
 | `/api/v1/buyer/**` | `ROLE_BUYER` |
 | `/api/v1/seller/**` | `ROLE_SELLER` |
@@ -83,5 +87,6 @@ Production requires HTTPS, an externally managed `JWT_SECRET`, and the real fron
 
 ## 8. Verification
 
-- `RestApiIntegrationTest`: `401` without token and with a tampered token, `403` for another role's routes, logout invalidates the token, token claims contain no email or role, CORS preflight allowed only for the configured origin, `X-Request-Id` echo and replacement.
+- `RoleIsolationIntegrationTest`: logs in with the five roles and checks the full 5 x 5 matrix (`200` only on the role's own routes, `403` on the routes of the other four), eleven processes of one role attempted with another role (`403 FORBIDDEN`), and a buyer that cannot see the order of another buyer (`403`).
+- `RestApiIntegrationTest`: `401` without token and with a tampered token, `401` for the catalog and health without token and `200` with it, login and buyer registration as the only business routes without token, `403` for another role's routes, logout invalidates the token, token claims contain no email or role, CORS preflight allowed only for the configured origin, `X-Request-Id` echo and replacement.
 - `JwtTokenServiceAdapterTest`: claims, token version, tampered / foreign / expired tokens rejected, short secrets rejected at startup.

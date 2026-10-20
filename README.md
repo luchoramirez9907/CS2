@@ -22,7 +22,7 @@ envíos) en **MongoDB**.
 | JWT | JJWT 0.12.6, HS256 (`sub`, `jti`, `ver`, `iat`, `exp`; sin datos personales ni rol) |
 | Validación / errores | Jakarta Bean Validation, `@RestControllerAdvice` con envelope de error + `X-Request-Id` |
 | Observabilidad | Spring Boot Actuator (`/actuator/health`) |
-| Pruebas | JUnit 5 + Mockito + MockMvc — **68 tests en verde** (`.\mvnw.cmd test`) |
+| Pruebas | JUnit 5 + Mockito + MockMvc — **106 tests en verde** (`.\mvnw.cmd test`) |
 
 ## Estructura del repositorio
 
@@ -62,9 +62,10 @@ envíos) en **MongoDB**.
 - Autenticación JWT sin sesión. El token solo lleva identidad (`sub` = identificador de la persona,
   `jti`, `ver` = `User.authTokenVersion`); el rol y el estado se leen siempre del modelo vigente.
 - Logout y cambio de contraseña incrementan la versión e **invalidan todos los tokens anteriores**.
+- **Toda petición exige token**, salvo el login (que entrega el token) y el registro de comprador (que crea la cuenta). El catálogo y `/actuator/health` también lo piden.
 - Un puerto de entrada y un prefijo de rutas por rol:
   `/api/v1/buyer`, `/api/v1/seller`, `/api/v1/operator`, `/api/v1/admin`, `/api/v1/supervisor`,
-  más `/api/v1/public` (registro de compradores y catálogo) y `/api/v1/auth` (login, logout, contraseña).
+  más `/api/v1/public` (registro de compradores, sin token, y catálogo, con token) y `/api/v1/auth` (login, logout, contraseña).
 - El dominio aplica además la matriz de permisos y las reglas de propiedad (un comprador no ve pedidos ajenos).
 - Semántica HTTP: 200/201/204 en éxito, 400 validación, 401 sin token o credenciales inválidas,
   403 rol o propiedad, 404 no encontrado, 409 duplicado o transición inválida, 422 regla de negocio.
@@ -85,7 +86,7 @@ envíos) en **MongoDB**.
 
 ## Estado de validación
 
-- [x] Compilación limpia + 68/68 tests (dominio, autenticación, carga del usuario autenticado, JWT, validación de catálogos, mappers, adaptadores, casos de uso por rol, API REST con MockMvc)
+- [x] Compilación limpia + 106/106 tests (dominio, aislamiento entre roles, autenticación, carga del usuario autenticado, JWT, validación de catálogos, mappers, adaptadores, casos de uso por rol, API REST con MockMvc)
 - [x] Endpoints sobre los adaptadores JPA reales (entidades, mappers y repositorios de MySQL) con H2 en modo MySQL: login → carrito → checkout → pago → factura (`RelationalPersistenceIntegrationTest`)
 - [x] Arranque verificado en modo `memory,demo`: login → endpoint protegido → carrito → checkout → pago → factura → logout → token viejo rechazado (401)
 - [x] Arranque con `docker compose up --build` (MySQL 8 + MongoDB 6 + aplicación) verificado: conexión OK a ambas bases, datos demo sembrados y flujo completo por HTTP (carrito → checkout → pago → envío → entrega → finalización → factura → devolución → reembolso → reingreso de stock) con los datos guardados en MySQL (18 tablas) y el historial en MongoDB (`inventory_movements`, `shipment_tracking`)

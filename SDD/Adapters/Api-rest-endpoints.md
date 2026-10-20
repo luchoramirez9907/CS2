@@ -7,15 +7,15 @@ The REST API exposes the Role Input Ports (`domain/Input-ports.md`) over HTTP. E
 | Prefix | Role Input Port | Controller | Access |
 | ------ | --------------- | ---------- | ------ |
 | `/api/v1/auth` | `PublicAccessPort` (authentication) | `AuthRestController` | `login`: public · `logout`, `password`: any authenticated role |
-| `/api/v1/public` | `PublicAccessPort` | `PublicAccessRestController` | Public |
+| `/api/v1/public` | `PublicAccessPort` | `PublicAccessRestController` | `POST /buyers` (registration): public · catalog: any authenticated role |
 | `/api/v1/buyer` | `BuyerPort` | `BuyerRestController` | `BUYER` |
 | `/api/v1/seller` | `SellerPort` | `SellerRestController` | `SELLER` |
 | `/api/v1/operator` | `LogisticsOperatorPort` | `LogisticsOperatorRestController` | `LOGISTICS_OPERATOR` |
 | `/api/v1/admin` | `AdministratorPort` | `AdministratorRestController` | `ADMINISTRATOR` |
 | `/api/v1/supervisor` | `SupervisorPort` | `SupervisorRestController` | `SUPERVISOR` (GET only) |
-| `/actuator/health` | — | Spring Boot Actuator | Public |
+| `/actuator/health` | — | Spring Boot Actuator | Any authenticated role |
 
-Any other route is denied.
+Only the login and the buyer registration work without token. Any other route is denied.
 
 ---
 

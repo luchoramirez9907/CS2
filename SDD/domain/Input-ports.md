@@ -4,7 +4,7 @@
 
 Input Ports define the application entry contracts through which external delivery mechanisms (REST controllers) interact with the NexusMarket domain.
 
-The input ports are the **Role Input Ports** (`*Port`): one interface per system role (`SystemRole`), plus a public port for unauthenticated operations. Each exposes exactly the operations that role may perform. REST controllers depend **only** on these ports.
+The input ports are the **Role Input Ports** (`*Port`): one interface per system role (`SystemRole`), plus a public port for onboarding, authentication and the catalog. Each exposes exactly the operations that role may perform. REST controllers depend **only** on these ports.
 
 There are no per-operation input interfaces. Each Role Input Port is implemented by a Use Case Adapter that injects the Domain Services of the service catalog (`Services.md`) directly, one class per catalog service (for example `ConfirmOrderService` for "Confirm Order").
 
@@ -31,7 +31,7 @@ Each system role interacts with the application only through its Role Input Port
 
 | Role Input Port | Role (`SystemRole`) | Authentication |
 | --------------- | ------------------- | -------------- |
-| `PublicAccessPort` | — | Not required (except `logout` and `changeMyPassword`) |
+| `PublicAccessPort` | — | Not required only for `login` and `registerBuyer`; any authenticated role for the rest |
 | `BuyerPort` | `BUYER` | Required |
 | `SellerPort` | `SELLER` | Required |
 | `LogisticsOperatorPort` | `LOGISTICS_OPERATOR` | Required |
@@ -79,11 +79,11 @@ public interface PublicAccessPort {
 | Method | Authentication | Delegates to |
 | ------ | -------------- | ------------ |
 | `registerBuyer` | Not required | `RegisterBuyerService.registerBuyer` (self-registration, no performer) |
-| `consultCatalogProduct` | Not required | `ManageProductService.consultProduct` (anonymous: published products only) |
+| `consultCatalogProduct` | Any role | `ManageProductService.consultProduct` (anonymous: published products only) |
 | `login` | Not required | `AuthenticateUserService.login` (returns the `User` and its access token) |
 | `logout` | Any role | `AuthenticateUserService.logout` (invalidates previous tokens) |
 | `changeMyPassword` | Any role | `AuthenticateUserService.changePassword` |
-| `searchCatalog` | Not required | `ManageProductService.searchCatalog` (published products only) |
+| `searchCatalog` | Any role | `ManageProductService.searchCatalog` (published products only) |
 
 ---
 

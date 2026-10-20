@@ -16,7 +16,7 @@ cd nexusmarket\nexusmarketII
 .\mvnw.cmd test
 ```
 
-Resultado esperado: `Tests run: 68, Failures: 0, Errors: 0` y `BUILD SUCCESS`.
+Resultado esperado: `Tests run: 106, Failures: 0, Errors: 0` y `BUILD SUCCESS`.
 Las pruebas **no necesitan bases de datos**: usan el perfil `memory`.
 
 ## 2. Empaquetar
@@ -70,13 +70,22 @@ La aplicación espera a que las dos bases de datos estén sanas (`healthcheck`) 
 el perfil `demo` en `http://127.0.0.1:8080`. Se conecta a ellas por la red interna de Docker
 (`mysql-db:3306` con el usuario `nexusmarket_app`, `mongo-db:27017`). El código fuente se monta
 como volumen y las dependencias de Maven quedan en el volumen `maven_cache`, así que el
-segundo arranque es más rápido. El puerto publicado se cambia con `HOST_SERVER_PORT`.
+segundo arranque es más rápido. Los archivos compilados del contenedor van en su propio volumen
+(`app_target`), separado de la carpeta `target` que usa VS Code, para que no se pisen. El puerto publicado se cambia con `HOST_SERVER_PORT`.
 
 ### Verificar salud
 
+Toda petición pide token salvo el login y el registro de comprador, así que el health también lo pide:
+
 ```powershell
-curl.exe -s http://127.0.0.1:8080/actuator/health
-# {"groups":["liveness","readiness"],"status":"UP"}
+curl.exe -s -o NUL -w "HTTP:%{http_code}`n" http://127.0.0.1:8080/actuator/health
+# HTTP:401 (sin token: la API está viva y la seguridad responde)
+```
+
+Con el token del paso 5 responde `{"status":"UP"}`:
+
+```powershell
+curl.exe -s http://127.0.0.1:8080/actuator/health -H "Authorization: Bearer $buyer"
 ```
 
 ## 4. Datos de demostración (perfil `demo`)
@@ -152,3 +161,4 @@ docker compose stop        # o `docker compose down` para borrar los contenedore
 | `403 FORBIDDEN` | La ruta pertenece a otro rol, o el recurso es de otro participante | Usar la cuenta del rol correspondiente |
 | `mvnw clean` falla borrando `target` | El servidor Java de VS Code tiene archivos abiertos | Recargar la ventana de VS Code o cerrar la carpeta y repetir |
 | `curl.exe` devuelve 400 con JSON inline en PowerShell | Comillas alteradas por la shell | Usar `-d "@archivo.json"` como en el paso 5 |
+| `nexusmarket-app` se reinicia sin parar con `ClassFormatError` en el log | Archivos compilados dañados en `target` | El contenedor ya compila en su propio volumen (`app_target`), separado del `target` de VS Code. Si pasa igual: `docker compose down nexusmarket-app`, `docker volume rm cs2_app_target` y `docker compose up -d` |

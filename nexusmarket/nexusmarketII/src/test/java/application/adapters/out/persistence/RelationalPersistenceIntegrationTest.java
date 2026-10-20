@@ -89,11 +89,10 @@ class RelationalPersistenceIntegrationTest {
     void purchaseFlowOverHttpIsStoredThroughJpa() throws Exception {
         assertInstanceOf(MysqlOrderRepositoryAdapter.class, orderRepository);
 
-        mockMvc.perform(get("/api/v1/public/products/product-1"))
+        String buyer = login("buyer@nexusmarket.com");
+        mockMvc.perform(get("/api/v1/public/products/product-1").header(HttpHeaders.AUTHORIZATION, "Bearer " + buyer))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.identifier").value("product-1"));
-
-        String buyer = login("buyer@nexusmarket.com");
         mockMvc.perform(post("/api/v1/buyer/cart/items").header(HttpHeaders.AUTHORIZATION, "Bearer " + buyer)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"productId\":\"product-1\",\"quantity\":2}"))

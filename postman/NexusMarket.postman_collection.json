@@ -1,7 +1,7 @@
 {
   "info": {
     "name": "NexusMarket API",
-    "description": "Flujo completo de NexusMarket: login por rol, compra, pago, envío, entrega, factura, devolución y reembolso, más ejemplos de errores. Antes de empezar, escribe la contraseña de las cuentas demo en la variable demoPassword (está en application.properties, propiedad nexusmarket.demo.password). Ejecuta las carpetas en orden: cada login guarda su token y el checkout guarda orderId.",
+    "description": "Flujo completo de NexusMarket: registro, login por rol, catálogo, compra, pago, envío, entrega, factura, devolución y reembolso, más ejemplos de errores. Toda petición exige token salvo el registro de comprador y el login. Antes de empezar, escribe la contraseña de las cuentas demo en la variable demoPassword (está en application.properties, propiedad nexusmarket.demo.password). Ejecuta las carpetas en orden: cada login guarda su token y el checkout guarda orderId.",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "variable": [
@@ -13,23 +13,32 @@
     { "key": "sellerToken", "value": "" },
     { "key": "supervisorToken", "value": "" },
     { "key": "orderId", "value": "" },
-    { "key": "returnId", "value": "" }
+    { "key": "returnId", "value": "" },
+    { "key": "newBuyerId", "value": "" },
+    { "key": "newBuyerEmail", "value": "" },
+    { "key": "newBuyerToken", "value": "" }
   ],
   "item": [
     {
-      "name": "0. Público (sin token)",
+      "name": "0. Registro de comprador (único sin token junto al login)",
       "item": [
         {
-          "name": "Salud de la API",
-          "request": { "method": "GET", "url": "http://localhost:8080/actuator/health" }
-        },
-        {
-          "name": "Buscar en el catálogo",
-          "request": { "method": "GET", "url": "{{baseUrl}}/public/products?q=keyboard" }
-        },
-        {
-          "name": "Ver un producto",
-          "request": { "method": "GET", "url": "{{baseUrl}}/public/products/product-1" }
+          "name": "Registrar comprador nuevo",
+          "event": [
+            { "listen": "prerequest", "script": { "exec": [
+              "const ts = Date.now();",
+              "pm.collectionVariables.set('newBuyerId', 'buyer-' + ts);",
+              "pm.collectionVariables.set('newBuyerEmail', 'comprador' + ts + '@nexusmarket.com');"
+            ] } },
+            { "listen": "test", "script": { "exec": [
+              "pm.test('201 Created', () => pm.response.to.have.status(201));"
+            ] } }
+          ],
+          "request": {
+            "method": "POST", "url": "{{baseUrl}}/public/buyers",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"identifier\": \"{{newBuyerId}}\",\n  \"fullName\": \"Comprador de Prueba\",\n  \"email\": \"{{newBuyerEmail}}\",\n  \"password\": \"Passw0rd1\",\n  \"primaryAddress\": {\n    \"street\": \"Calle 10 # 20-30\",\n    \"city\": \"Medellin\",\n    \"state\": \"Antioquia\",\n    \"country\": \"Colombia\",\n    \"postalCode\": \"050001\"\n  }\n}" }
+          }
         }
       ]
     },
@@ -94,6 +103,32 @@
             "method": "POST", "url": "{{baseUrl}}/auth/login",
             "header": [{ "key": "Content-Type", "value": "application/json" }],
             "body": { "mode": "raw", "raw": "{\n  \"email\": \"supervisor@nexusmarket.com\",\n  \"password\": \"{{demoPassword}}\"\n}" }
+          }
+        }
+      ]
+    },
+    {
+      "name": "1b. Salud y catálogo (con token)",
+      "item": [
+        {
+          "name": "Salud de la API",
+          "request": {
+            "method": "GET", "url": "http://localhost:8080/actuator/health",
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{buyerToken}}" }] }
+          }
+        },
+        {
+          "name": "Buscar en el catálogo",
+          "request": {
+            "method": "GET", "url": "{{baseUrl}}/public/products?q=keyboard",
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{buyerToken}}" }] }
+          }
+        },
+        {
+          "name": "Ver un producto",
+          "request": {
+            "method": "GET", "url": "{{baseUrl}}/public/products/product-1",
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{buyerToken}}" }] }
           }
         }
       ]
@@ -295,9 +330,131 @@
           }
         },
         {
+          "name": "Catálogo sin token -> 401",
+          "event": [{ "listen": "test", "script": { "exec": ["pm.test('401', () => pm.response.to.have.status(401));"] } }],
+          "request": { "method": "GET", "url": "{{baseUrl}}/public/products" }
+        },
+        {
+          "name": "Salud sin token -> 401",
+          "event": [{ "listen": "test", "script": { "exec": ["pm.test('401', () => pm.response.to.have.status(401));"] } }],
+          "request": { "method": "GET", "url": "http://localhost:8080/actuator/health" }
+        },
+        {
           "name": "Producto inexistente -> 404",
           "event": [{ "listen": "test", "script": { "exec": ["pm.test('404', () => pm.response.to.have.status(404));"] } }],
-          "request": { "method": "GET", "url": "{{baseUrl}}/public/products/no-existe" }
+          "request": {
+            "method": "GET", "url": "{{baseUrl}}/public/products/no-existe",
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{buyerToken}}" }] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "9. Bloqueo entre roles (todas deben dar 403)",
+      "event": [{ "listen": "test", "script": { "exec": [
+        "if (!pm.info.requestName.startsWith('Login')) {",
+        "  pm.test('403 Forbidden: el rol no puede hacer esto', () => pm.response.to.have.status(403));",
+        "}"
+      ] } }],
+      "item": [
+        {
+          "name": "Comprador confirma un pago (es del admin)",
+          "request": {
+            "method": "POST", "url": "{{baseUrl}}/admin/orders/{{orderId}}/payment",
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{buyerToken}}" }] }
+          }
+        },
+        {
+          "name": "Comprador publica un producto (es del vendedor)",
+          "request": {
+            "method": "POST", "url": "{{baseUrl}}/seller/products",
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{buyerToken}}" }] },
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"identifier\": \"p-intruso\",\n  \"name\": \"Intento\",\n  \"price\": 10,\n  \"digital\": false\n}" }
+          }
+        },
+        {
+          "name": "Vendedor hace un pedido (es del comprador)",
+          "request": {
+            "method": "POST", "url": "{{baseUrl}}/buyer/orders",
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{sellerToken}}" }] }
+          }
+        },
+        {
+          "name": "Operador registra un usuario (es del admin)",
+          "request": {
+            "method": "POST", "url": "{{baseUrl}}/admin/users",
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{operatorToken}}" }] },
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"identifier\": \"u-intruso\",\n  \"fullName\": \"Intento\",\n  \"email\": \"intento@x.com\",\n  \"role\": \"SUPERVISOR\",\n  \"password\": \"Passw0rd1\"\n}" }
+          }
+        },
+        {
+          "name": "Operador agrega al carrito (es del comprador)",
+          "request": {
+            "method": "POST", "url": "{{baseUrl}}/buyer/cart/items",
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{operatorToken}}" }] },
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"productId\": \"product-1\",\n  \"quantity\": 1\n}" }
+          }
+        },
+        {
+          "name": "Supervisor bloquea un usuario (solo consulta)",
+          "request": {
+            "method": "PATCH", "url": "{{baseUrl}}/admin/users/buyer-1/status",
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{supervisorToken}}" }] },
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"status\": \"BLOCKED\"\n}" }
+          }
+        },
+        {
+          "name": "Supervisor confirma un pago (solo consulta)",
+          "request": {
+            "method": "POST", "url": "{{baseUrl}}/admin/orders/{{orderId}}/payment",
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{supervisorToken}}" }] }
+          }
+        },
+        {
+          "name": "Admin hace un pedido (es del comprador)",
+          "request": {
+            "method": "POST", "url": "{{baseUrl}}/buyer/orders",
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{adminToken}}" }] }
+          }
+        },
+        {
+          "name": "Admin publica un producto (es del vendedor)",
+          "request": {
+            "method": "POST", "url": "{{baseUrl}}/seller/products",
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{adminToken}}" }] },
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"identifier\": \"p-admin\",\n  \"name\": \"Intento\",\n  \"price\": 10,\n  \"digital\": false\n}" }
+          }
+        },
+        {
+          "name": "Admin despacha por la ruta del operador",
+          "request": {
+            "method": "POST", "url": "{{baseUrl}}/operator/orders/{{orderId}}/shipment/dispatch",
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{adminToken}}" }] }
+          }
+        },
+        {
+          "name": "Login del comprador nuevo (el de la carpeta 0)",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('200 OK', () => pm.response.to.have.status(200));",
+            "pm.collectionVariables.set('newBuyerToken', pm.response.json().data.token);"
+          ] } }],
+          "request": {
+            "method": "POST", "url": "{{baseUrl}}/auth/login",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"email\": \"{{newBuyerEmail}}\",\n  \"password\": \"Passw0rd1\"\n}" }
+          }
+        },
+        {
+          "name": "Comprador nuevo intenta ver el pedido de otro comprador",
+          "request": {
+            "method": "GET", "url": "{{baseUrl}}/buyer/orders/{{orderId}}",
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{newBuyerToken}}" }] }
+          }
         }
       ]
     }

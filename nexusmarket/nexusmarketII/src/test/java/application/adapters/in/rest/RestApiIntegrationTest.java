@@ -45,13 +45,34 @@ class RestApiIntegrationTest {
     // ---------------------------------------------------------------- Public access
 
     @Test
-    void healthAndPublicCatalogDoNotRequireAToken() throws Exception {
+    void healthAndCatalogRequireAToken() throws Exception {
         mockMvc.perform(get("/actuator/health"))
-                .andExpect(status().isOk());
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.code").value("AUTHENTICATION_REQUIRED"));
         mockMvc.perform(get("/api/v1/public/products/product-1"))
+                .andExpect(status().isUnauthorized());
+        mockMvc.perform(get("/api/v1/public/products").param("q", "keyboard"))
+                .andExpect(status().isUnauthorized());
+
+        String buyerToken = login("buyer@nexusmarket.com");
+        mockMvc.perform(get("/actuator/health").header(HttpHeaders.AUTHORIZATION, bearer(buyerToken)))
+                .andExpect(status().isOk());
+        mockMvc.perform(get("/api/v1/public/products/product-1").header(HttpHeaders.AUTHORIZATION, bearer(buyerToken)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.identifier").value("product-1"))
                 .andExpect(jsonPath("$.data.price").value(249900.00));
+    }
+
+    @Test
+    void onlyLoginAndBuyerRegistrationWorkWithoutAToken() throws Exception {
+        mockMvc.perform(post("/api/v1/auth/login").contentType(MediaType.APPLICATION_JSON)
+                        .content(credentials("seller@nexusmarket.com")))
+                .andExpect(status().isOk());
+        mockMvc.perform(post("/api/v1/public/buyers").contentType(MediaType.APPLICATION_JSON)
+                        .content(buyerRegistration("buyer-open", "open@x.com")))
+                .andExpect(status().isCreated());
+        mockMvc.perform(get("/api/v1/public/products/product-1").header(HttpHeaders.AUTHORIZATION, "Bearer bad.token"))
+                .andExpect(status().isUnauthorized());
     }
 
     @Test
@@ -74,11 +95,12 @@ class RestApiIntegrationTest {
 
     @Test
     void catalogSearchAndListingsOverHttp() throws Exception {
-        mockMvc.perform(get("/api/v1/public/products").param("q", "keyboard"))
+        String adminToken = login("admin@nexusmarket.com");
+        mockMvc.perform(get("/api/v1/public/products").param("q", "keyboard")
+                        .header(HttpHeaders.AUTHORIZATION, bearer(adminToken)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data", hasSize(1)))
                 .andExpect(jsonPath("$.data[0].identifier").value("product-1"));
-        String adminToken = login("admin@nexusmarket.com");
         mockMvc.perform(get("/api/v1/admin/users").param("role", "SELLER")
                         .header(HttpHeaders.AUTHORIZATION, bearer(adminToken)))
                 .andExpect(status().isOk())

@@ -20,6 +20,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.transaction.CannotCreateTransactionException;
 import org.springframework.validation.FieldError;
+import org.springframework.web.HttpMediaTypeNotSupportedException;
 import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.MissingServletRequestParameterException;
@@ -120,6 +121,13 @@ public class GlobalExceptionHandler {
                                                                 HttpServletRequest request) {
         return build(HttpStatus.METHOD_NOT_ALLOWED, ErrorResponse.INVALID_REQUEST,
                 "HTTP method not supported for this resource", request, null);
+    }
+
+    @ExceptionHandler(HttpMediaTypeNotSupportedException.class)
+    public ResponseEntity<ErrorResponse> handleUnsupportedMediaType(HttpMediaTypeNotSupportedException ex,
+                                                                    HttpServletRequest request) {
+        return build(HttpStatus.UNSUPPORTED_MEDIA_TYPE, ErrorResponse.INVALID_REQUEST,
+                "Content-Type must be application/json", request, null);
     }
 
     @ExceptionHandler(DuplicateEmailException.class)

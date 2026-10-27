@@ -64,6 +64,17 @@ class RestApiIntegrationTest {
     }
 
     @Test
+    void unsupportedContentTypeReturns415InsteadOf500() throws Exception {
+        String adminToken = login("admin@nexusmarket.com");
+        mockMvc.perform(post("/api/v1/admin/returns/any-return/refund")
+                        .header(HttpHeaders.AUTHORIZATION, bearer(adminToken))
+                        .contentType(MediaType.APPLICATION_FORM_URLENCODED))
+                .andExpect(status().isUnsupportedMediaType())
+                .andExpect(jsonPath("$.code").value("INVALID_REQUEST"))
+                .andExpect(jsonPath("$.message").value("Content-Type must be application/json"));
+    }
+
+    @Test
     void onlyLoginAndBuyerRegistrationWorkWithoutAToken() throws Exception {
         mockMvc.perform(post("/api/v1/auth/login").contentType(MediaType.APPLICATION_JSON)
                         .content(credentials("seller@nexusmarket.com")))

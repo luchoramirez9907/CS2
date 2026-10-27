@@ -16,7 +16,7 @@ cd nexusmarket\nexusmarketII
 .\mvnw.cmd test
 ```
 
-Resultado esperado: `Tests run: 110, Failures: 0, Errors: 0` y `BUILD SUCCESS`.
+Resultado esperado: `Tests run: 111, Failures: 0, Errors: 0` y `BUILD SUCCESS`.
 Las pruebas **no necesitan bases de datos**: usan el perfil `memory`.
 
 ## 2. Empaquetar

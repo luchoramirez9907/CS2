@@ -47,12 +47,13 @@ Role port: `BuyerPort.requestReturn`. REST: `POST /api/v1/buyer/orders/{orderId}
 1. `buyerId`, `orderId`, `reason` not blank → `IllegalArgumentException`.
 2. The buyer exists → `EntityNotFoundException`; is active → `IllegalStateException`.
 3. The order exists → `EntityNotFoundException`.
-4. The order was placed by that buyer → `ReturnNotAllowedException`.
-5. The order is `DELIVERED` → `ReturnNotAllowedException`.
+4. The order has no active return (`REQUESTED`, `APPROVED` or `COMPLETED`); a new one is allowed only after a rejection → `ReturnNotAllowedException` (422).
+5. The order was placed by that buyer → `ReturnNotAllowedException`.
+6. The order is `DELIVERED` → `ReturnNotAllowedException`.
 
 ### 2.5 Domain Behavior
 
-`Return.request(order, buyer, reason, id, now)` in `REQUESTED`; `order.addReturn(return)`. An order may have several return requests.
+`Return.request(order, buyer, reason, id, now)` in `REQUESTED`; `order.addReturn(return)`. An order holds at most one active return; it may accumulate several requests only when the previous ones were rejected (prevents restocking and refunding the same order twice).
 
 ### 2.6 Persistence and Notification
 

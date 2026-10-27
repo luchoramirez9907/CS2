@@ -851,7 +851,7 @@ Consolidated view of the products, orders, and returns associated with a seller.
 ## Post-Sale Processes
 
 * `Invoice` and `Shipment` are generated as a direct consequence of an `Order`.
-* `Return` can only be requested against a delivered `Order`.
+* `Return` can only be requested against a delivered `Order`, and an `Order` holds at most one active `Return` (a new one is allowed only after a rejection).
 * `Refund` can only be generated from an approved `Return`, and each `Return` generates at most one `Refund`. A refund is either processed (`PROCESSED`) or rejected (`REJECTED`) by an administrator.
 * Every step of a `Shipment` (created, dispatched, returned, delivered) is recorded as a `ShipmentTrackingEvent`. A returned shipment (failed delivery) can be dispatched again; the order stays `SHIPPED` meanwhile.
 

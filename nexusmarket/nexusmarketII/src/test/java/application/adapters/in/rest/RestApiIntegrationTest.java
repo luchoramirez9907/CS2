@@ -289,6 +289,45 @@ class RestApiIntegrationTest {
                 .andExpect(status().isBadRequest());
     }
 
+    @Test
+    void aSecondReturnOnTheSameOrderReturns422() throws Exception {
+        String buyerToken = login("buyer@nexusmarket.com");
+        String adminToken = login("admin@nexusmarket.com");
+        String operatorToken = login("operator@nexusmarket.com");
+        mockMvc.perform(post("/api/v1/buyer/cart/items").header(HttpHeaders.AUTHORIZATION, bearer(buyerToken))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"productId\":\"product-1\",\"quantity\":1}"))
+                .andExpect(status().isCreated());
+        String order = mockMvc.perform(post("/api/v1/buyer/orders").header(HttpHeaders.AUTHORIZATION, bearer(buyerToken)))
+                .andExpect(status().isCreated())
+                .andReturn().getResponse().getContentAsString();
+        String orderId = JsonPath.read(order, "$.data.orderId");
+        mockMvc.perform(post("/api/v1/admin/orders/" + orderId + "/payment")
+                        .header(HttpHeaders.AUTHORIZATION, bearer(adminToken)))
+                .andExpect(status().isOk());
+        mockMvc.perform(post("/api/v1/operator/orders/" + orderId + "/shipment")
+                        .header(HttpHeaders.AUTHORIZATION, bearer(operatorToken))
+                        .contentType(MediaType.APPLICATION_JSON).content("{\"originWarehouseId\":\"warehouse-1\"}"))
+                .andExpect(status().is2xxSuccessful());
+        for (String step : new String[] {"/shipment/dispatch", "/shipment/delivery", "/finalization"}) {
+            mockMvc.perform(post("/api/v1/operator/orders/" + orderId + step)
+                            .header(HttpHeaders.AUTHORIZATION, bearer(operatorToken)))
+                    .andExpect(status().isOk());
+        }
+
+        String returnBody = "{\"reason\":\"damaged item\"}";
+        mockMvc.perform(post("/api/v1/buyer/orders/" + orderId + "/returns")
+                        .header(HttpHeaders.AUTHORIZATION, bearer(buyerToken))
+                        .contentType(MediaType.APPLICATION_JSON).content(returnBody))
+                .andExpect(status().is2xxSuccessful())
+                .andExpect(jsonPath("$.data.returnStatus").value("REQUESTED"));
+        mockMvc.perform(post("/api/v1/buyer/orders/" + orderId + "/returns")
+                        .header(HttpHeaders.AUTHORIZATION, bearer(buyerToken))
+                        .contentType(MediaType.APPLICATION_JSON).content(returnBody))
+                .andExpect(status().isUnprocessableContent())
+                .andExpect(jsonPath("$.code").value("BUSINESS_RULE_VIOLATION"));
+    }
+
     // ---------------------------------------------------------------- CORS and correlation
 
     @Test

@@ -11,6 +11,7 @@ import application.domain.exceptions.InsufficientInventoryException;
 import application.domain.exceptions.InvalidRoleAssignmentException;
 import application.domain.exceptions.OrderAlreadyFinalizedException;
 import application.domain.exceptions.OwnershipAccessDeniedException;
+import application.domain.exceptions.ReturnNotAllowedException;
 import application.domain.exceptions.WeakPasswordException;
 import application.domain.models.Administrator;
 import application.domain.models.Buyer;
@@ -500,7 +501,11 @@ class DomainServicesTest {
         assertEquals(ReturnStatus.REJECTED, returns.consultReturn("buyer-1", rejected.getReturnId()).getReturnStatus());
 
         Return approved = returnRequests.requestReturn("buyer-1", orderId, "damaged box");
+        assertThrows(ReturnNotAllowedException.class,
+                () -> returnRequests.requestReturn("buyer-1", orderId, "duplicate request"));
         returns.approveReturn("admin-1", approved.getReturnId());
+        assertThrows(ReturnNotAllowedException.class,
+                () -> returnRequests.requestReturn("buyer-1", orderId, "duplicate request"));
         assertThrows(IllegalArgumentException.class,
                 () -> refunds.processRefund("admin-1", approved.getReturnId(), new BigDecimal("1000")));
         assertThrows(InvalidRoleAssignmentException.class,

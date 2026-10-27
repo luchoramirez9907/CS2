@@ -22,7 +22,7 @@ envíos) en **MongoDB**.
 | JWT | JJWT 0.12.6, HS256 (`sub`, `jti`, `ver`, `iat`, `exp`; sin datos personales ni rol) |
 | Validación / errores | Jakarta Bean Validation, `@RestControllerAdvice` con envelope de error + `X-Request-Id` |
 | Observabilidad | Spring Boot Actuator (`/actuator/health`) |
-| Pruebas | JUnit 5 + Mockito + MockMvc — **110 tests en verde** (`.\mvnw.cmd test`) |
+| Pruebas | JUnit 5 + Mockito + MockMvc — **111 tests en verde** (`.\mvnw.cmd test`) |
 
 ## Estructura del repositorio
 
@@ -86,7 +86,7 @@ envíos) en **MongoDB**.
 
 ## Estado de validación
 
-- [x] Compilación limpia + 110/110 tests (dominio, aislamiento entre roles, autenticación, carga del usuario autenticado, JWT, validación de catálogos, mappers, adaptadores, casos de uso por rol, API REST con MockMvc)
+- [x] Compilación limpia + 111/111 tests (dominio, aislamiento entre roles, autenticación, carga del usuario autenticado, JWT, validación de catálogos, mappers, adaptadores, casos de uso por rol, API REST con MockMvc)
 - [x] Endpoints sobre los adaptadores JPA reales (entidades, mappers y repositorios de MySQL) con H2 en modo MySQL: login → carrito → checkout → pago → factura (`RelationalPersistenceIntegrationTest`)
 - [x] Arranque verificado en modo `memory,demo`: login → endpoint protegido → carrito → checkout → pago → factura → logout → token viejo rechazado (401)
 - [x] Arranque con `docker compose up --build` (MySQL 8 + MongoDB 6 + aplicación) verificado: conexión OK a ambas bases, datos demo sembrados y flujo completo por HTTP (carrito → checkout → pago → envío → entrega → finalización → factura → devolución → reembolso → reingreso de stock) con los datos guardados en MySQL (18 tablas) y el historial en MongoDB (`inventory_movements`, `shipment_tracking`)

@@ -165,7 +165,7 @@ Retrieves the current status and tracking information of a shipment according to
 
 ## Request Return
 
-Creates a return request for a buyer over a delivered order, recording the reason provided by the buyer.
+Creates a return request for a buyer over a delivered order, recording the reason provided by the buyer. An order holds at most one active return (a new request is allowed only after the previous one was rejected).
 
 ## Resolve Return
 

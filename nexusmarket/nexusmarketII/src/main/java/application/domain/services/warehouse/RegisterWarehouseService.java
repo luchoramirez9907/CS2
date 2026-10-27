@@ -1,6 +1,7 @@
 package application.domain.services.warehouse;
 
 import application.domain.enums.BusinessOperation;
+import application.domain.exceptions.DuplicateResourceException;
 import application.domain.exceptions.EntityNotFoundException;
 import application.domain.models.Administrator;
 import application.domain.models.MarketplaceWarehouse;
@@ -57,7 +58,7 @@ public class RegisterWarehouseService {
         Person requester = permissionsService.requirePermission(requesterId,
                 BusinessOperation.REGISTER_WAREHOUSE);
         if (warehouseRepository.findById(identifier).isPresent()) {
-            throw new IllegalArgumentException("A warehouse with identifier '" + identifier + "' already exists");
+            throw new DuplicateResourceException("warehouse", identifier);
         }
 
         Warehouse warehouse;

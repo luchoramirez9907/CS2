@@ -4,6 +4,7 @@ import application.adapters.in.rest.responses.ErrorResponse;
 import application.domain.exceptions.AccountDisabledException;
 import application.domain.exceptions.DomainException;
 import application.domain.exceptions.DuplicateEmailException;
+import application.domain.exceptions.DuplicateResourceException;
 import application.domain.exceptions.EntityNotFoundException;
 import application.domain.exceptions.InvalidCredentialsException;
 import application.domain.exceptions.InvalidRoleAssignmentException;
@@ -130,8 +131,8 @@ public class GlobalExceptionHandler {
                 "Content-Type must be application/json", request, null);
     }
 
-    @ExceptionHandler(DuplicateEmailException.class)
-    public ResponseEntity<ErrorResponse> handleDuplicate(DuplicateEmailException ex, HttpServletRequest request) {
+    @ExceptionHandler({DuplicateEmailException.class, DuplicateResourceException.class})
+    public ResponseEntity<ErrorResponse> handleDuplicate(DomainException ex, HttpServletRequest request) {
         return build(HttpStatus.CONFLICT, ErrorResponse.RESOURCE_ALREADY_EXISTS, ex.getMessage(), request, null);
     }
 

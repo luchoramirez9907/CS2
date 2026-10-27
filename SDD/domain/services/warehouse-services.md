@@ -43,7 +43,7 @@ Role ports: `AdministratorPort.registerWarehouse` (`ownerSellerId` optional), `S
 
 1. `identifier` not blank → `IllegalArgumentException`.
 2. Requester has `REGISTER_WAREHOUSE` (administrator or seller, active).
-3. No warehouse with the same identifier → `IllegalArgumentException`.
+3. No warehouse with the same identifier → `DuplicateResourceException` (409).
 4. **Marketplace warehouse** (`ownerSellerId` empty): the requester must be an administrator → `InvalidRoleAssignmentException`.
 5. **Seller warehouse**: the owner seller exists → `EntityNotFoundException`; is active → `IllegalStateException`; `requireSellerAccess` (a seller can only register warehouses for itself) → `OwnershipAccessDeniedException`.
 6. `name` not blank and `address` not null (warehouse constructor) → `IllegalArgumentException`.

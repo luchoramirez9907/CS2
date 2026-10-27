@@ -1,5 +1,6 @@
 package application.domain.services.catalog;
 
+import application.domain.exceptions.DuplicateResourceException;
 import application.domain.exceptions.EntityNotFoundException;
 import application.domain.models.Product;
 import application.domain.models.Seller;
@@ -54,8 +55,7 @@ public class PublishProductService {
             throw new IllegalArgumentException("A published product must enter the catalog as PUBLISHED");
         }
         if (productRepository.findById(product.getIdentifier()).isPresent()) {
-            throw new IllegalArgumentException("A product with identifier '"
-                    + product.getIdentifier() + "' already exists");
+            throw new DuplicateResourceException("product", product.getIdentifier());
         }
 
         seller.addProduct(product);

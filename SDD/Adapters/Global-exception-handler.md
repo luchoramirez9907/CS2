@@ -46,7 +46,7 @@ Every handled error uses this envelope (`adapters/in/rest/responses/ErrorRespons
 | Unknown route | `NoResourceFoundException` | 404 | `RESOURCE_NOT_FOUND` |
 | Unsupported HTTP method | `HttpRequestMethodNotSupportedException` | 405 | `INVALID_REQUEST` |
 | Unsupported Content-Type (body not sent as JSON) | `HttpMediaTypeNotSupportedException` | 415 | `INVALID_REQUEST` |
-| Duplicate identifier or email | `DuplicateEmailException` | 409 | `RESOURCE_ALREADY_EXISTS` |
+| Duplicate person (identifier or email), product or warehouse identifier | `DuplicateEmailException`, `DuplicateResourceException` | 409 | `RESOURCE_ALREADY_EXISTS` |
 | Illegal state transition, inactive participant | `OrderAlreadyFinalizedException`, `IllegalStateException` | 409 | `INVALID_STATE_TRANSITION` |
 | Other business rule | `InsufficientInventoryException`, `WeakPasswordException`, `ReturnNotAllowedException`, `RefundNotAllowedException`, `BuyerNotAuthorizedException`, any other `DomainException` | 422 | `BUSINESS_RULE_VIOLATION` |
 | Database unavailable | `DataAccessResourceFailureException`, `CannotCreateTransactionException` | 503 | `DEPENDENCY_UNAVAILABLE` |

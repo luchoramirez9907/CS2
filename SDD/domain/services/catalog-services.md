@@ -61,7 +61,7 @@ Role port: `SellerPort.publishProduct` (seller = the authenticated seller). REST
 2. The seller exists → `EntityNotFoundException`; is active → `IllegalStateException`.
 3. The product belongs to that seller → `IllegalArgumentException`.
 4. The product enters the catalog as `PUBLISHED` → `IllegalArgumentException`.
-5. No product with the same identifier → `IllegalArgumentException`.
+5. No product with the same identifier → `DuplicateResourceException` (409).
 
 Entity invariants (identifier, name, price, status, seller, variants, digital delivery details) are enforced by the `Product` constructors.
 

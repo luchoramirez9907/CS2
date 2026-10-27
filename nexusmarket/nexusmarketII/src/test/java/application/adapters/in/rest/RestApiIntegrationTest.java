@@ -64,6 +64,25 @@ class RestApiIntegrationTest {
     }
 
     @Test
+    void duplicateProductAndWarehouseReturn409() throws Exception {
+        String sellerToken = login("seller@nexusmarket.com");
+        mockMvc.perform(post("/api/v1/seller/products").header(HttpHeaders.AUTHORIZATION, bearer(sellerToken))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"identifier\":\"product-1\",\"name\":\"Copia\",\"price\":10,\"digital\":false}"))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.code").value("RESOURCE_ALREADY_EXISTS"));
+
+        String adminToken = login("admin@nexusmarket.com");
+        mockMvc.perform(post("/api/v1/admin/warehouses").header(HttpHeaders.AUTHORIZATION, bearer(adminToken))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"identifier\":\"warehouse-1\",\"name\":\"Copia\",\"address\":{\"street\":\"Calle 1\","
+                                + "\"city\":\"Medellin\",\"state\":\"Antioquia\",\"country\":\"Colombia\","
+                                + "\"postalCode\":\"050001\"}}"))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.code").value("RESOURCE_ALREADY_EXISTS"));
+    }
+
+    @Test
     void unsupportedContentTypeReturns415InsteadOf500() throws Exception {
         String adminToken = login("admin@nexusmarket.com");
         mockMvc.perform(post("/api/v1/admin/returns/any-return/refund")

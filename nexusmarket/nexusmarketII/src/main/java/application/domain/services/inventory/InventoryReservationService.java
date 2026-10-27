@@ -55,6 +55,15 @@ public class InventoryReservationService {
     }
 
     /**
+     * Checks, without changing anything, that some inventory record of the
+     * product holds the reserved units. Used to validate a dispatch before it
+     * modifies the order.
+     */
+    public void requireReservedStock(Product product, int quantity) {
+        findRecordWithReservation(product, quantity);
+    }
+
+    /**
      * Confirms the sale of reserved stock when the order is fulfilled.
      */
     public void confirmSale(Product product, int quantity, Person performedBy) {

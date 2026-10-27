@@ -20,15 +20,15 @@ This document specifies the registration of **inventory movements** and the cons
 
 ### 2.1 Description
 
-Records a manual change on the stock of a physical product at a warehouse. The movement type decides the effect.
+Records a manual change on the stock of a physical product at a warehouse. Only `STOCK_IN`, `ADJUSTMENT` and `DAMAGE` are manual; the other types are recorded only by the system processes and are rejected here with `400`.
 
 | Movement type | Effect on the record | Creates the record if missing |
 | ------------- | -------------------- | ----------------------------- |
 | `STOCK_IN` | `available += quantity` | Yes |
-| `RESERVATION` | available → reserved | No |
-| `RESERVATION_RELEASE` | reserved → available | No |
+| `RESERVATION` | Not allowed manually: recorded by the shopping cart. | — |
+| `RESERVATION_RELEASE` | Not allowed manually: recorded by the shopping cart (item removed or quantity reduced). | — |
 | `ADJUSTMENT` | `available += quantity` (signed correction) | No |
-| `RETURN` | `available += quantity` | No |
+| `RETURN` | Not allowed manually: recorded when an approved return is completed. | — |
 | `DAMAGE` | available → damaged | No |
 | `SALE_EXIT` | Not allowed manually: it is recorded when a shipment is dispatched. | — |
 
@@ -134,6 +134,7 @@ The `Inventory`. No state changes.
 | --------- | ------- | -------- |
 | `reserveStock(product, quantity, performer)` | `ManageCartItemsService` | Reserves in the first record with enough available stock; otherwise `InsufficientInventoryException` (reports the best availability). |
 | `releaseReservation(product, quantity, performer)` | `ManageCartItemsService` | Releases from the first record holding enough reserved units; otherwise `IllegalStateException`. |
+| `requireReservedStock(product, quantity)` | `UpdateShipmentStatusService` | Checks, without changing anything, that a record holds the reserved units; validates a dispatch before it modifies the order. |
 | `confirmSale(product, quantity, performer)` | `UpdateShipmentStatusService` | Removes reserved units (`SALE_EXIT`) when the shipment is dispatched. |
 | `reinstateStock(product, quantity, performer)` | `ResolveReturnService` | Returns units to the available stock (`RETURN`) when an approved return is completed. |
 

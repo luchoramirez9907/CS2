@@ -90,6 +90,12 @@ public class UpdateShipmentStatusService {
                     + order.getOrderStatus().getCode() + ")");
         }
 
+        // Validate every reservation first: a failed dispatch must leave the order untouched.
+        for (OrderItem item : order.getItems()) {
+            if (item.getProduct().requiresPhysicalDispatch()) {
+                inventoryReservationService.requireReservedStock(item.getProduct(), item.getQuantity());
+            }
+        }
         shipment.dispatch();
         for (OrderItem item : order.getItems()) {
             if (item.getProduct().requiresPhysicalDispatch()) {

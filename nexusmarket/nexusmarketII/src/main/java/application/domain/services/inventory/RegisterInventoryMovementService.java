@@ -22,15 +22,17 @@ import java.util.UUID;
 /**
  * RegisterInventoryMovementService
  *
- * Catalog service "Register Inventory Movement". Every significant
- * change to an inventory record (initial stock, reservation, reservation release, manual
- * adjustment, return or damage) is applied through the Inventory aggregate,
+ * Catalog service "Register Inventory Movement". Every manual change
+ * to an inventory record (incoming stock, adjustment or damage) is applied
+ * through the Inventory aggregate,
  * which guarantees that stock is never reserved or reduced below zero and
  * that damaged stock is never reserved; each change is persisted in the
  * movement history.
  *
- * Only physical products hold inventory. SALE_EXIT movements are recorded
- * automatically when a shipment is dispatched.
+ * Only physical products hold inventory. Only STOCK_IN, ADJUSTMENT and DAMAGE
+ * are registered manually: reservations and their releases are recorded by the
+ * shopping cart, SALE_EXIT when a shipment is dispatched and RETURN when an
+ * approved return is completed (InventoryReservationService).
  */
 public class RegisterInventoryMovementService {
 
@@ -61,8 +63,9 @@ public class RegisterInventoryMovementService {
 
     /**
      * @param type     STOCK_IN (initial/incoming stock; creates the record when missing),
-     *                 RESERVATION (positive quantity reserves, negative releases),
-     *                 ADJUSTMENT (signed manual correction) or RETURN (reinstatement)
+     *                 ADJUSTMENT (signed manual correction) or DAMAGE (damaged stock).
+     *                 RESERVATION, RESERVATION_RELEASE, SALE_EXIT and RETURN are recorded
+     *                 only by the system (shopping cart, shipment dispatch, completed return)
      * @param quantity quantity affected by the movement
      * @return the updated Inventory record
      */
@@ -76,6 +79,11 @@ public class RegisterInventoryMovementService {
         }
         Person performer = permissionsService.requirePermission(requesterId,
                 BusinessOperation.REGISTER_INVENTORY_MOVEMENT);
+        if (!isManualMovement(type)) {
+            throw new IllegalArgumentException("Movement type " + type.getCode()
+                    + " cannot be registered manually: it is recorded by the system"
+                    + " (shopping cart, shipment dispatch or completed return)");
+        }
         Product product = findPhysicalProduct(productId);
         Warehouse warehouse = findWarehouse(warehouseId);
         requireStockAccess(performer, product, warehouse);
@@ -87,23 +95,21 @@ public class RegisterInventoryMovementService {
             inventory.stockIn(quantity, performer);
         } else {
             inventory = findInventory(productId, warehouseId);
-            if (InventoryMovementType.RESERVATION.equals(type)) {
-                inventory.reserve(quantity, performer);
-            } else if (InventoryMovementType.RESERVATION_RELEASE.equals(type)) {
-                inventory.releaseReservation(quantity, performer);
-            } else if (InventoryMovementType.DAMAGE.equals(type)) {
+            if (InventoryMovementType.DAMAGE.equals(type)) {
                 inventory.markDamaged(quantity, performer);
-            } else if (InventoryMovementType.ADJUSTMENT.equals(type)) {
-                inventory.adjust(quantity, performer);
-            } else if (InventoryMovementType.RETURN.equals(type)) {
-                inventory.reinstate(quantity, performer);
             } else {
-                throw new IllegalArgumentException("Movement type " + type.getCode()
-                        + " cannot be registered manually (it is recorded when a shipment is dispatched)");
+                inventory.adjust(quantity, performer);
             }
         }
         persist(inventory);
         return inventory;
+    }
+
+    /** Only these movements are manual; the rest are recorded by the system processes. */
+    private static boolean isManualMovement(InventoryMovementType type) {
+        return InventoryMovementType.STOCK_IN.equals(type)
+                || InventoryMovementType.ADJUSTMENT.equals(type)
+                || InventoryMovementType.DAMAGE.equals(type);
     }
 
     /**

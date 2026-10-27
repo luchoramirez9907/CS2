@@ -12,6 +12,8 @@ import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 
+import java.util.List;
+
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.startsWith;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
@@ -61,6 +63,26 @@ class RestApiIntegrationTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.identifier").value("product-1"))
                 .andExpect(jsonPath("$.data.price").value(249900.00));
+    }
+
+    @Test
+    void systemMovementTypesCannotBeRegisteredManually() throws Exception {
+        String operatorToken = login("operator@nexusmarket.com");
+        for (String type : List.of("RESERVATION", "RESERVATION_RELEASE", "RETURN", "SALE_EXIT")) {
+            mockMvc.perform(post("/api/v1/operator/inventory/movements")
+                            .header(HttpHeaders.AUTHORIZATION, bearer(operatorToken))
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content("{\"productId\":\"product-1\",\"warehouseId\":\"warehouse-1\","
+                                    + "\"movementType\":\"" + type + "\",\"quantity\":1}"))
+                    .andExpect(status().isBadRequest());
+        }
+        // Manual movements keep working.
+        mockMvc.perform(post("/api/v1/operator/inventory/movements")
+                        .header(HttpHeaders.AUTHORIZATION, bearer(operatorToken))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"productId\":\"product-1\",\"warehouseId\":\"warehouse-1\","
+                                + "\"movementType\":\"STOCK_IN\",\"quantity\":5}"))
+                .andExpect(status().isCreated());
     }
 
     @Test

@@ -387,8 +387,11 @@ class DomainServicesTest {
         assertEquals(2, record.getAvailableQuantity());
         assertEquals(8, record.getDamagedQuantity());
 
-        assertThrows(InsufficientInventoryException.class,
+        // Reservations are recorded only by the shopping cart, never by hand.
+        assertThrows(IllegalArgumentException.class,
                 () -> inventory.registerMovement("admin-1", "product-1", "wh-1", InventoryMovementType.RESERVATION, 3));
+        // Damaged stock is still never reservable (rule checked on the Inventory entity).
+        assertThrows(InsufficientInventoryException.class, () -> stock().reserve(3, admin));
         assertThrows(IllegalArgumentException.class,
                 () -> inventory.registerMovement("admin-1", "product-1", "wh-1", InventoryMovementType.ADJUSTMENT, -5));
         assertThrows(IllegalArgumentException.class,
@@ -418,6 +421,22 @@ class DomainServicesTest {
     }
 
     // ------------------------------------------------------------------ Order lifecycle, logistics, billing
+
+    @Test
+    void aFailedDispatchLeavesTheOrderAndShipmentUntouched() {
+        Order order = paidOrder(2);
+        String orderId = order.getOrderId();
+        shipments.createShipment("admin-1", orderId, "wh-1", "op-1");
+        // The reservation of the order is lost (no longer possible through the API).
+        stock().releaseReservation(2, admin);
+
+        assertThrows(IllegalStateException.class, () -> logistics.dispatchShipment("op-1", orderId));
+        assertEquals(OrderStatus.PAID, order.getOrderStatus());
+        assertEquals(ShipmentStatus.PENDING,
+                shipmentQueries.consultShipment("buyer-1", orderId).getShipmentStatus());
+        assertEquals(10, stock().getAvailableQuantity());
+        assertEquals(0, stock().getReservedQuantity());
+    }
 
     @Test
     void fullOrderLifecycleThroughLogisticsAndFinalization() {

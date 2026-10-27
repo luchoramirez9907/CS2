@@ -97,7 +97,7 @@ Role ports: `AdministratorPort.dispatchShipment`, `LogisticsOperatorPort.dispatc
 
 ### 3.5 Domain Behavior
 
-`shipment.dispatch()`: order `SHIPPED`, shipment `IN_TRANSIT`, dispatch date set. For every physical item: `InventoryReservationService.confirmSale` (movement `SALE_EXIT`).
+First, for every physical item, `InventoryReservationService.requireReservedStock` checks, without changing anything, that its reserved units exist; if any is missing the dispatch fails (`409`) and the order and shipment stay untouched. Then `shipment.dispatch()`: order `SHIPPED`, shipment `IN_TRANSIT`, dispatch date set, and for every physical item `InventoryReservationService.confirmSale` (movement `SALE_EXIT`).
 
 ### 3.6 Persistence and Notification
 

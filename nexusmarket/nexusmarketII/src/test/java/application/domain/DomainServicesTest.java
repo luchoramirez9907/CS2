@@ -421,6 +421,21 @@ class DomainServicesTest {
         assertTrue(cartQueries.consultCart("buyer-2").isEmpty());
     }
 
+    @Test
+    void aFailedReservationLeavesTheCartUntouched() {
+        ShoppingCart cart = carts.addItemToCart("buyer-1", null, "product-1", 1);
+
+        assertThrows(InsufficientInventoryException.class,
+                () -> carts.addItemToCart("buyer-1", null, "product-1", 50));
+        assertEquals(1, cart.findItem("product-1").orElseThrow().getQuantity());
+        assertEquals(9, stock().getAvailableQuantity());
+        assertEquals(1, stock().getReservedQuantity());
+
+        assertTrue(carts.clearCart("buyer-1").isEmpty());
+        assertEquals(10, stock().getAvailableQuantity());
+        assertEquals(0, stock().getReservedQuantity());
+    }
+
     // ------------------------------------------------------------------ Order lifecycle, logistics, billing
 
     @Test

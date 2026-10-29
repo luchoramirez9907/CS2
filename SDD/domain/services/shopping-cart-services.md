@@ -71,7 +71,8 @@ The updated `ShoppingCart`.
 
 ```text
 validate input → load active buyer → require commercial ACTIVE → load PUBLISHED product
-→ resolve or create cart → add item at catalog price → [physical] reserve stock
+→ resolve or create cart → [physical] reserve stock → add item at catalog price
+  (reserving first: if the reservation fails, the cart is left untouched)
 → attach cart → save cart → notify
 ```
 

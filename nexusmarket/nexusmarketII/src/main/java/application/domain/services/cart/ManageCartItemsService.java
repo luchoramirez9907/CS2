@@ -76,11 +76,11 @@ public class ManageCartItemsService {
 
         // The unit price is captured from the catalog; the buyer never sets it.
         ShoppingCart cart = resolveCart(buyer, cartId);
-        cart.addItem(product, quantity, product.getPrice());
-
         if (product.requiresPhysicalDispatch()) {
             inventoryReservationService.reserveStock(product, quantity, buyer);
         }
+        // Reserve first: if there is no stock the cart is left untouched.
+        cart.addItem(product, quantity, product.getPrice());
 
         buyer.attachCart(cart);
         cartRepository.save(cart);

@@ -1,8 +1,8 @@
 package application.domain.exceptions;
 
 /**
- * Thrown when the email (or platform identifier) of a person already
- * exists. Both must be unique across the platform (per SDD).
+ * Thrown when the email of a person already exists. It must be unique
+ * across the platform (per SDD).
  */
 public class DuplicateEmailException extends DomainException {
 

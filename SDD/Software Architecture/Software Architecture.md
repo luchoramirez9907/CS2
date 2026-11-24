@@ -497,6 +497,7 @@ Examples:
 
 - InsufficientInventoryException
 - DuplicateEmailException
+- DuplicateResourceException
 - OrderAlreadyFinalizedException
 - InvalidRoleAssignmentException
 - SellerSelfRegistrationNotAllowedException

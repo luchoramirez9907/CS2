@@ -172,7 +172,8 @@ public class SellerRestController {
     @GetMapping("/orders/{orderId}")
     public ResponseEntity<ApiResponse<OrderResponse>> consultOrder(
             @AuthenticationPrincipal AuthenticatedUserPrincipal principal, @PathVariable String orderId) {
-        return ok("Order found", OrderDtoMapper.toResponse(sellerPort.consultOrder(principal.user(), orderId)));
+        return ok("Order found", OrderDtoMapper.toSellerResponse(
+                sellerPort.consultOrder(principal.user(), orderId), principal.user().getIdentifier()));
     }
 
     @GetMapping("/orders/{orderId}/invoice")
@@ -231,7 +232,7 @@ public class SellerRestController {
             @AuthenticationPrincipal AuthenticatedUserPrincipal principal,
             @RequestParam(required = false) String status) {
         return ok("Orders found", sellerPort.consultMyOrders(principal.user(), FilterParamMapper.orderStatus(status))
-                .stream().map(OrderDtoMapper::toResponse).toList());
+                .stream().map(order -> OrderDtoMapper.toSellerResponse(order, principal.user().getIdentifier())).toList());
     }
 
     @GetMapping("/returns")

@@ -328,6 +328,90 @@ class RestApiIntegrationTest {
                 .andExpect(jsonPath("$.code").value("BUSINESS_RULE_VIOLATION"));
     }
 
+    @Test
+    void sellersOnlySeeTheirOwnItemsInASharedOrder() throws Exception {
+        String adminToken = login("admin@nexusmarket.com");
+        mockMvc.perform(post("/api/v1/admin/sellers").header(HttpHeaders.AUTHORIZATION, bearer(adminToken))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"identifier\":\"seller-shared\",\"fullName\":\"Shared Seller\","
+                                + "\"email\":\"shared.seller@nexusmarket.com\",\"password\":\"Passw0rd1\"}"))
+                .andExpect(status().isCreated());
+        String otherToken = loginWith("shared.seller@nexusmarket.com", "Passw0rd1");
+        mockMvc.perform(post("/api/v1/seller/products").header(HttpHeaders.AUTHORIZATION, bearer(otherToken))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"identifier\":\"ebook-shared\",\"name\":\"Shared Ebook\",\"price\":1000,"
+                                + "\"digital\":true,\"digitalDeliveryDetails\":\"link\"}"))
+                .andExpect(status().isCreated());
+        mockMvc.perform(post("/api/v1/public/buyers").contentType(MediaType.APPLICATION_JSON)
+                        .content(buyerRegistration("buyer-shared", "shared.buyer@nexusmarket.com")))
+                .andExpect(status().isCreated());
+        String buyerToken = loginWith("shared.buyer@nexusmarket.com", "Passw0rd1");
+        for (String item : new String[] {"product-1", "ebook-shared"}) {
+            mockMvc.perform(post("/api/v1/buyer/cart/items").header(HttpHeaders.AUTHORIZATION, bearer(buyerToken))
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content("{\"productId\":\"" + item + "\",\"quantity\":1}"))
+                    .andExpect(status().isCreated());
+        }
+        String order = mockMvc.perform(post("/api/v1/buyer/orders").header(HttpHeaders.AUTHORIZATION, bearer(buyerToken)))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.data.items", hasSize(2)))
+                .andExpect(jsonPath("$.data.totalAmount").value(250900.00))
+                .andReturn().getResponse().getContentAsString();
+        String orderId = JsonPath.read(order, "$.data.orderId");
+
+        mockMvc.perform(get("/api/v1/seller/orders/" + orderId).header(HttpHeaders.AUTHORIZATION, bearer(otherToken)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.items", hasSize(1)))
+                .andExpect(jsonPath("$.data.items[0].productId").value("ebook-shared"))
+                .andExpect(jsonPath("$.data.totalAmount").value(1000))
+                .andExpect(jsonPath("$.data.invoiceId").doesNotExist())
+                .andExpect(jsonPath("$.data.taxAmount").doesNotExist());
+        mockMvc.perform(get("/api/v1/seller/orders").header(HttpHeaders.AUTHORIZATION, bearer(otherToken)))
+                .andExpect(jsonPath("$.data", hasSize(1)))
+                .andExpect(jsonPath("$.data[0].items", hasSize(1)));
+        mockMvc.perform(get("/api/v1/admin/orders/" + orderId).header(HttpHeaders.AUTHORIZATION, bearer(adminToken)))
+                .andExpect(jsonPath("$.data.items", hasSize(2)))
+                .andExpect(jsonPath("$.data.totalAmount").value(250900.00));
+    }
+
+    @Test
+    void aSellerSeesTheWholeOrderWhenEveryItemIsItsOwn() throws Exception {
+        mockMvc.perform(post("/api/v1/public/buyers").contentType(MediaType.APPLICATION_JSON)
+                        .content(buyerRegistration("buyer-single", "single.buyer@nexusmarket.com")))
+                .andExpect(status().isCreated());
+        String buyerToken = loginWith("single.buyer@nexusmarket.com", "Passw0rd1");
+        mockMvc.perform(post("/api/v1/buyer/cart/items").header(HttpHeaders.AUTHORIZATION, bearer(buyerToken))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"productId\":\"product-1\",\"quantity\":1}"))
+                .andExpect(status().isCreated());
+        String order = mockMvc.perform(post("/api/v1/buyer/orders").header(HttpHeaders.AUTHORIZATION, bearer(buyerToken)))
+                .andExpect(status().isCreated())
+                .andReturn().getResponse().getContentAsString();
+        String orderId = JsonPath.read(order, "$.data.orderId");
+        mockMvc.perform(get("/api/v1/seller/orders/" + orderId)
+                        .header(HttpHeaders.AUTHORIZATION, bearer(login("seller@nexusmarket.com"))))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.totalAmount").value(249900.00))
+                .andExpect(jsonPath("$.data.taxAmount").value(39900.00))
+                .andExpect(jsonPath("$.data.invoiceId").exists());
+    }
+
+    @Test
+    void aDuplicateIdentifierIsNotReportedAsAnEmail() throws Exception {
+        mockMvc.perform(post("/api/v1/public/buyers").contentType(MediaType.APPLICATION_JSON)
+                        .content(buyerRegistration("buyer-1", "new.email@nexusmarket.com")))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.code").value("RESOURCE_ALREADY_EXISTS"))
+                .andExpect(jsonPath("$.message").value("A person with identifier 'buyer-1' already exists"));
+        mockMvc.perform(post("/api/v1/admin/sellers")
+                        .header(HttpHeaders.AUTHORIZATION, bearer(login("admin@nexusmarket.com")))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"identifier\":\"seller-1\",\"fullName\":\"Dup\","
+                                + "\"email\":\"dup.seller@nexusmarket.com\",\"password\":\"Passw0rd1\"}"))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.message").value("A person with identifier 'seller-1' already exists"));
+    }
+
     // ---------------------------------------------------------------- CORS and correlation
 
     @Test

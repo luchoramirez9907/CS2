@@ -70,6 +70,13 @@ public class Order {
 
     public List<OrderItem> getItems() { return Collections.unmodifiableList(items); }
 
+    /** Items of the order sold by the given seller. */
+    public List<OrderItem> getItemsOf(String sellerId) {
+        return items.stream()
+                .filter(item -> item.getProduct().getSeller().getIdentifier().equals(sellerId))
+                .toList();
+    }
+
     public OrderStatus getOrderStatus() { return orderStatus; }
 
     public LocalDateTime getCreationDate() { return creationDate; }

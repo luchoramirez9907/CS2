@@ -118,7 +118,7 @@ The token is a JWT signed with HS256 whose claims are only `sub` (person identif
 | POST | `/inventory/movements` | `InventoryMovementRequest {productId, warehouseId, movementType, quantity}` | `InventoryResponse` | 201 · 422 insufficient inventory |
 | POST | `/inventory/damaged` | `DamagedStockRequest {productId, warehouseId, quantity}` | `InventoryResponse` | 201 |
 | GET | `/inventory?productId=&warehouseId=` | — | `InventoryResponse` | 200 |
-| GET | `/orders/{orderId}` | — | `OrderResponse` (orders containing the seller's products) | 200 |
+| GET | `/orders/{orderId}` | — | `OrderResponse` (only the seller's items and their total) | 200 |
 | GET | `/orders/{orderId}/invoice` | — | `InvoiceResponse` | 200 |
 | GET | `/orders/{orderId}/shipment` | — | `ShipmentResponse` | 200 |
 | GET | `/orders/{orderId}/tracking` | — | `List<TrackingEventResponse>` | 200 |
@@ -126,7 +126,7 @@ The token is a JWT signed with HS256 whose claims are only `sub` (person identif
 | GET | `/reports/performance` | — | `SellerPerformanceReportResponse` | 200 |
 | GET | `/products` | — | `List<ProductResponse>` (every status) | 200 |
 | GET | `/warehouses` | — | `List<WarehouseResponse>` (own warehouses) | 200 |
-| GET | `/orders?status=` | — | `List<OrderResponse>` (orders containing the seller's products) | 200 · 400 unknown status |
+| GET | `/orders?status=` | — | `List<OrderResponse>` (only the seller's items and their total) | 200 · 400 unknown status |
 | GET | `/returns?status=` | — | `List<ReturnResponse>` | 200 |
 | GET | `/inventory/movements?productId=&warehouseId=` | — | `List<InventoryMovementResponse>` (chronological) | 200 |
 

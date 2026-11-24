@@ -1,7 +1,7 @@
 package application.domain.exceptions;
 
 /**
- * Thrown when a catalog resource (product, warehouse) is registered with an
+ * Thrown when a resource (product, warehouse, person) is registered with an
  * identifier that already exists. Identifiers must be unique (per SDD).
  */
 public class DuplicateResourceException extends DomainException {

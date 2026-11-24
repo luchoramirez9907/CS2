@@ -173,6 +173,8 @@ Role ports: `consultOrder` in every authenticated role port.
 
 The `Order`. No state changes. Output port: `OrderRepository`.
 
+The REST adapter shows a seller only its own items (`Order.getItemsOf`) and their total; in an order shared with other sellers it also hides the invoice fields, which cover the whole order.
+
 ---
 
 ## 6. List Orders
@@ -195,4 +197,4 @@ List<Order> listOrders(String requesterId, OrderStatus status);
 
 ### 6.4 Authorization and Output
 
-Requester has `CONSULT_ORDER`; every order is filtered with `canAccessOrder` and by status. An unknown status code returns `400`. Output port: `OrderRepository.findAll`.
+Requester has `CONSULT_ORDER`; every order is filtered with `canAccessOrder` and by status. An unknown status code returns `400`. Output port: `OrderRepository.findAll`. A seller sees each order as in section 5.5.

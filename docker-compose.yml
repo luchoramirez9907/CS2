@@ -55,6 +55,8 @@ services:
       JWT_EXPIRATION_MS: ${JWT_EXPIRATION_MS:-3600000}
       FRONTEND_ORIGIN: ${FRONTEND_ORIGIN:-http://localhost:5173}
       SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-demo}
+      # The API stores and returns local dates
+      TZ: ${TZ:-America/Bogota}
       SERVER_PORT: 8080
     depends_on:
       mysql-db:
@@ -62,6 +64,19 @@ services:
       mongo-db:
         condition: service_healthy
     command: ["mvn", "-B", "spring-boot:run"]
+
+  nexusmarket-web:
+    build:
+      context: ./nexusmarket/nexusmarket-web
+      args:
+        VITE_API_URL: ${VITE_API_URL:-http://localhost:${HOST_SERVER_PORT:-8080}/api/v1}
+    container_name: nexusmarket-web
+    restart: unless-stopped
+    ports:
+      # The API only accepts this origin (FRONTEND_ORIGIN)
+      - "5173:80"
+    depends_on:
+      - nexusmarket-app
 
 volumes:
   mysql_data:

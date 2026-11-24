@@ -11,10 +11,10 @@ navegador hasta las bases de datos.
 C4Container
     title Contenedores — NexusMarket
 
-    Person(usuario, "Usuario por rol", "Navegador con el JWT en memoria")
+    Person(usuario, "Usuario por rol", "Navegador con el JWT en sessionStorage")
 
     System_Boundary(boundary, "Plataforma (docker-compose.yml)") {
-        Container(spa, "Frontend SPA", "Vite/React", "Origen FRONTEND_ORIGIN; envía el JWT como Bearer")
+        Container(spa, "nexusmarket-web", "React 19 + Vite, servida por nginx", "Origen FRONTEND_ORIGIN :5173; envía el JWT como Bearer")
         Container(app, "nexusmarket-app", "Spring Boot 4.1 + Java 17", "Hexágono: rest → useCases → domain → persistence/security. Puerto 8080 (SERVER_PORT)")
         ContainerDb(mysql, "mysql-db", "MySQL 8 / nexusmarket :3306", "Tablas JPA: persons, users, products, warehouses, inventories, orders, returns...")
         ContainerDb(mongo, "mongo-db", "MongoDB 6 / nexusmarket :27017", "Colecciones inventory_movements y shipment_tracking")
@@ -30,8 +30,8 @@ C4Container
 
 | Contenedor | Imagen / arranque | Variables relevantes | Papel |
 |---|---|---|---|
-| `spa` | Fuera de este repositorio (`:5173`) | `FRONTEND_ORIGIN` del lado de la app | Dispara todos los flujos; el preflight `OPTIONS` va sin JWT |
-| `nexusmarket-app` | `nexusmarket/nexusmarketII/Dockerfile` (Maven + JDK 17) | `DB_URL`, `DB_USERNAME`, `DB_PASSWORD`, `MONGODB_URI`, `JWT_SECRET`, `JWT_EXPIRATION_MS`, `FRONTEND_ORIGIN`, `SPRING_PROFILES_ACTIVE`, `SERVER_PORT` | Atiende `/api/v1/**`, valida el JWT, ejecuta el dominio y persiste |
+| `nexusmarket-web` | `nexusmarket/nexusmarket-web/Dockerfile` (Node + nginx), `:5173` | `VITE_API_URL` al compilar; `FRONTEND_ORIGIN` del lado de la app | Dispara todos los flujos; el preflight `OPTIONS` va sin JWT |
+| `nexusmarket-app` | `nexusmarket/nexusmarketII/Dockerfile` (Maven + JDK 17) | `DB_URL`, `DB_USERNAME`, `DB_PASSWORD`, `MONGODB_URI`, `JWT_SECRET`, `JWT_EXPIRATION_MS`, `FRONTEND_ORIGIN`, `SPRING_PROFILES_ACTIVE`, `SERVER_PORT`, `TZ` (por defecto `America/Bogota`) | Atiende `/api/v1/**`, valida el JWT, ejecuta el dominio y persiste |
 | `mysql-db` | `mysql:8.0` con `healthcheck` | `MYSQL_DATABASE=nexusmarket`, `MYSQL_USER=nexusmarket_app` | Lecturas y escrituras de todos los agregados |
 | `mongo-db` | `mongo:6.0` con `healthcheck` | — | Escritura de movimientos de inventario y eventos de rastreo; lectura del historial |
 
@@ -45,7 +45,7 @@ dentro del mismo proceso.
 
 ```mermaid
 sequenceDiagram
-    participant SPA as SPA
+    participant SPA as nexusmarket-web
     participant APP as nexusmarket-app :8080
     participant MY as MySQL
     participant MO as MongoDB

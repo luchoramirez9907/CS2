@@ -22,7 +22,7 @@ C4Context
 
     SystemDb_Ext(mysql, "MySQL 8", "Datos relacionales del negocio")
     SystemDb_Ext(mongo, "MongoDB 6", "Historial: movimientos de inventario y rastreo de envíos")
-    System_Ext(front, "Frontend SPA", "Cliente web en FRONTEND_ORIGIN (fuera de este repositorio)")
+    System(front, "NexusMarket Web", "Cliente React de los 5 roles (nexusmarket/nexusmarket-web)")
 
     Rel(publico, front, "Usa")
     Rel(comprador, front, "Usa")
@@ -52,4 +52,6 @@ C4Context
 |---|---|
 | MySQL | Personas, usuarios, productos, bodegas, inventario, carritos, pedidos, devoluciones |
 | MongoDB | `inventory_movements` y `shipment_tracking` (historiales que solo crecen) |
-| Frontend SPA | Único origen permitido por CORS (`FRONTEND_ORIGIN`, por defecto `http://localhost:5173`) |
+
+La web (`nexusmarket/nexusmarket-web`) es parte del proyecto y es el único origen permitido por CORS
+(`FRONTEND_ORIGIN`, por defecto `http://localhost:5173`). Su detalle está en `../Adapters/Web-frontend.md`.

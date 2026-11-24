@@ -15,7 +15,7 @@ This document specifies the services that register and manage the **internal par
 
 - **Requester.** Every operation receives the identifier of the requesting person (`requesterId`, `administratorId`, …). The Role Input Port implementations always pass the authenticated `User`'s identifier, so it can never be chosen by the client.
 - **Authorization.** `ValidatePermissionsService.requirePermission(requesterId, operation)` loads the requester, rejects it when it does not exist (`EntityNotFoundException`) or is not active (`IllegalStateException`), and checks the permission matrix of `Services.md` (`InvalidRoleAssignmentException`). Ownership checks (`require*Access`) then reject access to information of other participants (`OwnershipAccessDeniedException`).
-- **HTTP mapping.** Exceptions are translated by the REST layer as defined in `Adapters/Global-exception-handler.md`: `IllegalArgumentException` → 400, `InvalidRoleAssignmentException` / `OwnershipAccessDeniedException` → 403, `EntityNotFoundException` → 404, `DuplicateEmailException` → 409, `IllegalStateException` → 409, other `DomainException` → 422.
+- **HTTP mapping.** Exceptions are translated by the REST layer as defined in `Adapters/Global-exception-handler.md`: `IllegalArgumentException` → 400, `InvalidRoleAssignmentException` / `OwnershipAccessDeniedException` → 403, `EntityNotFoundException` → 404, `DuplicateEmailException` / `DuplicateResourceException` → 409, `IllegalStateException` → 409, other `DomainException` → 422.
 - **Notifications** are sent through the `NotificationService` output port after the change is persisted.
 
 ---
@@ -55,7 +55,7 @@ Role port: `AdministratorPort.registerUser`. REST: `POST /api/v1/admin/users`.
 2. Password policy → `WeakPasswordException`.
 3. Requester has `REGISTER_USER` (administrator, active).
 4. `role` is not `BUYER` nor `SELLER` (they have dedicated services) → `IllegalArgumentException`.
-5. `identifier` and `email` not already used by any person → `DuplicateEmailException`.
+5. `identifier` not already used → `DuplicateResourceException`; `email` not already used → `DuplicateEmailException` (both 409).
 
 The password is validated **before** anything is stored, so a rejected password never leaves a person without an account.
 
@@ -73,7 +73,7 @@ The registered `Person`.
 
 ### 3.9 Exceptions
 
-`IllegalArgumentException`, `WeakPasswordException`, `InvalidRoleAssignmentException`, `EntityNotFoundException` (unknown requester), `IllegalStateException` (inactive requester), `DuplicateEmailException` (identifier or email already used).
+`IllegalArgumentException`, `WeakPasswordException`, `InvalidRoleAssignmentException`, `EntityNotFoundException` (unknown requester), `IllegalStateException` (inactive requester), `DuplicateResourceException` (identifier already used), `DuplicateEmailException` (email already used).
 
 ### 3.10 Output Ports
 

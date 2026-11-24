@@ -47,7 +47,7 @@ Buyer registerBuyer(String performerId, String identifier, String fullName, Stri
 1. `identifier`, `fullName`, `email` not blank; `primaryAddress` not null → `IllegalArgumentException`.
 2. Password policy → `WeakPasswordException`.
 3. When a performer is given, it has `REGISTER_BUYER` (administrator, active).
-4. `identifier` and `email` not already used → `DuplicateEmailException`.
+4. `identifier` not already used → `DuplicateResourceException`; `email` not already used → `DuplicateEmailException` (both 409).
 
 ### 2.6 Domain Behavior
 
@@ -63,7 +63,7 @@ The registered `Buyer`.
 
 ### 2.9 Exceptions
 
-`IllegalArgumentException`, `WeakPasswordException`, `InvalidRoleAssignmentException` (performer is not an administrator), `DuplicateEmailException`.
+`IllegalArgumentException`, `WeakPasswordException`, `InvalidRoleAssignmentException` (performer is not an administrator), `DuplicateResourceException`, `DuplicateEmailException`.
 
 ### 2.10 Output Ports
 

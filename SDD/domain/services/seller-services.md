@@ -46,7 +46,7 @@ Role port: `AdministratorPort.registerSeller`. REST: `POST /api/v1/admin/sellers
 3. The performer exists → `EntityNotFoundException`; is active → `IllegalStateException`.
 4. The performer is not a seller → `SellerSelfRegistrationNotAllowedException` (a seller can never register sellers, including itself).
 5. The performer is an administrator → `InvalidRoleAssignmentException`.
-6. `identifier` and `email` not already used → `DuplicateEmailException`.
+6. `identifier` not already used → `DuplicateResourceException`; `email` not already used → `DuplicateEmailException` (both 409).
 
 ### 2.6 Domain Behavior
 
@@ -62,7 +62,7 @@ The registered `Seller`.
 
 ### 2.9 Exceptions
 
-`IllegalArgumentException`, `WeakPasswordException`, `EntityNotFoundException`, `IllegalStateException`, `SellerSelfRegistrationNotAllowedException`, `InvalidRoleAssignmentException`, `DuplicateEmailException`.
+`IllegalArgumentException`, `WeakPasswordException`, `EntityNotFoundException`, `IllegalStateException`, `SellerSelfRegistrationNotAllowedException`, `InvalidRoleAssignmentException`, `DuplicateResourceException`, `DuplicateEmailException`.
 
 ### 2.10 Output Ports
 

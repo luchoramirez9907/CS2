@@ -1,6 +1,7 @@
 package application.domain.services;
 
 import application.domain.exceptions.DuplicateEmailException;
+import application.domain.exceptions.DuplicateResourceException;
 import application.domain.ports.out.PersonRepository;
 
 /**
@@ -22,7 +23,7 @@ public final class ServiceValidations {
      */
     public static void requireUniqueIdentity(PersonRepository personRepository, String identifier, String email) {
         if (personRepository.existsByIdentifier(identifier)) {
-            throw new DuplicateEmailException(identifier);
+            throw new DuplicateResourceException("person", identifier);
         }
         if (personRepository.existsByEmail(email)) {
             throw new DuplicateEmailException(email);

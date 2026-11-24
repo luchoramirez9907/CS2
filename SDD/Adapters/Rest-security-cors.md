@@ -42,6 +42,7 @@ Route authorization is the first boundary. The domain still enforces the permiss
 
 ## 4. CORS Policy
 
+- The client is the web of `nexusmarket/nexusmarket-web` (see `Web-frontend.md`).
 - Only the configured origin is allowed: `nexusmarket.cors.allowed-origin` (environment variable `FRONTEND_ORIGIN`, development default `http://localhost:5173`).
 - Methods: `GET`, `POST`, `PUT`, `PATCH`, `DELETE`, `OPTIONS`.
 - Allowed headers: `Authorization`, `Content-Type`, `Accept`, `X-Request-Id`. Exposed header: `X-Request-Id`.

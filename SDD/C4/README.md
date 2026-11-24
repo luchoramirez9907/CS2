@@ -10,7 +10,7 @@ en VS Code con la extensión de Mermaid).
 |---|---------|-----------|
 | — | `README.md` | Este índice |
 | L1 | `01-nivel-1-contexto.md` | Contexto: actores (5 roles + público) y sistemas externos |
-| L2 | `02-nivel-2-contenedores.md` | Contenedores (`nexusmarket-app`, MySQL, MongoDB, frontend) y red |
+| L2 | `02-nivel-2-contenedores.md` | Contenedores (`nexusmarket-web`, `nexusmarket-app`, MySQL, MongoDB) y red |
 | L3 | `03-nivel-3-componentes.md` | Componentes internos y ciclo de vida de una petición |
 | L4 | `04-nivel-4-codigo.md` | Clases clave y sus colaboraciones (flujo de compra) |
 | Capa | `05-capa-adapters-rest.md` | Adaptador de entrada REST: controladores, DTOs, mappers, errores |

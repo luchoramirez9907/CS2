@@ -1,6 +1,7 @@
 package application.domain.services.seller;
 
 import application.domain.exceptions.DuplicateEmailException;
+import application.domain.exceptions.DuplicateResourceException;
 import application.domain.exceptions.EntityNotFoundException;
 import application.domain.exceptions.SellerSelfRegistrationNotAllowedException;
 import application.domain.models.Administrator;
@@ -65,7 +66,7 @@ public class RegisterSellerService {
         Administrator administrator = (Administrator) performer;
 
         if (personRepository.existsByIdentifier(identifier)) {
-            throw new DuplicateEmailException(identifier);
+            throw new DuplicateResourceException("person", identifier);
         }
         if (personRepository.existsByEmail(email)) {
             throw new DuplicateEmailException(email);

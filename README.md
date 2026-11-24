@@ -2,7 +2,7 @@
 
 Sistema de gestión de un **marketplace** en **Java 17 + Spring Boot 4.1** con
 **arquitectura hexagonal** (DDD + Ports & Adapters), desarrollado a partir de la
-especificación del `SDD/` (Software Design Document). Incluye roles de negocio
+especificación del `SDD/` (Software Design Document), con una **web en React** para los cinco roles. Incluye roles de negocio
 (comprador, vendedor, operador logístico, administrador y supervisor),
 autenticación JWT con invalidación de sesiones, persistencia relacional en
 **MySQL** e historial operativo (movimientos de inventario y seguimiento de
@@ -22,7 +22,8 @@ envíos) en **MongoDB**.
 | JWT | JJWT 0.12.6, HS256 (`sub`, `jti`, `ver`, `iat`, `exp`; sin datos personales ni rol) |
 | Validación / errores | Jakarta Bean Validation, `@RestControllerAdvice` con envelope de error + `X-Request-Id` |
 | Observabilidad | Spring Boot Actuator (`/actuator/health`) |
-| Pruebas | JUnit 5 + Mockito + MockMvc — **112 tests en verde** (`.\mvnw.cmd test`) |
+| Web | React 19 + React Router 7 + Vite 8 (`nexusmarket/nexusmarket-web`, puerto 5173) |
+| Pruebas | JUnit 5 + Mockito + MockMvc — **115 tests en verde** (`.\mvnw.cmd test`) |
 
 ## Estructura del repositorio
 
@@ -38,9 +39,10 @@ envíos) en **MongoDB**.
 │       │   ├── security/          # JWT (dtos, mappers), filtro, SecurityConfig, BCrypt, CORS
 │       │   └── out/               # persistence (mysql, mongodb, memory), notification
 │       └── infrastructure/        # config (DomainBeanConfig), seed (datos demo), database
-│   ├── Dockerfile                 # Imagen de la aplicación (JDK 17 + Maven)
+│   └── Dockerfile                 # Imagen de la aplicación (JDK 17 + Maven)
+├── nexusmarket/nexusmarket-web/   # Web (React + Vite) de los 5 roles; su Dockerfile la sirve con nginx
 ├── SDD/                           # Especificación: arquitectura, dominio, puertos, adapters y C4
-├── docker-compose.yml             # MySQL 3306 + MongoDB 27017 + aplicación (8080)
+├── docker-compose.yml             # MySQL 3306 + MongoDB 27017 + aplicación (8080) + web (5173)
 └── SETUP.md                       # Guía paso a paso para ejecutar el proyecto
 ```
 
@@ -54,7 +56,7 @@ envíos) en **MongoDB**.
 | `SDD/domain/Services.md` | Catálogo de servicios, trazabilidad servicio → puerto → clase y matriz de permisos |
 | `SDD/domain/services/*.md` | Especificación detallada de cada operación (13 documentos, uno por subdominio) |
 | `SDD/domain/Input-ports.md` / `Output-ports.md` | Puertos de entrada por rol y puertos de salida |
-| `SDD/Adapters/*.md` | Casos de uso, REST (endpoints, validación, errores, seguridad/CORS) y persistencia |
+| `SDD/Adapters/*.md` | Casos de uso, REST (endpoints, validación, errores, seguridad/CORS), persistencia y la web (`Web-frontend.md`) |
 | `SDD/C4/*.md` | Modelo C4 (contexto, contenedores, componentes, código), una ficha por capa y flujos por endpoint |
 
 ## Seguridad y roles
@@ -66,7 +68,7 @@ envíos) en **MongoDB**.
 - Un puerto de entrada y un prefijo de rutas por rol:
   `/api/v1/buyer`, `/api/v1/seller`, `/api/v1/operator`, `/api/v1/admin`, `/api/v1/supervisor`,
   más `/api/v1/public` (registro de compradores, sin token, y catálogo, con token) y `/api/v1/auth` (login, logout, contraseña).
-- El dominio aplica además la matriz de permisos y las reglas de propiedad (un comprador no ve pedidos ajenos).
+- El dominio aplica además la matriz de permisos y las reglas de propiedad (un comprador no ve pedidos ajenos; un vendedor solo ve sus productos en un pedido compartido).
 - Semántica HTTP: 200/201/204 en éxito, 400 validación, 401 sin token o credenciales inválidas,
   403 rol o propiedad, 404 no encontrado, 409 duplicado o transición inválida, 422 regla de negocio.
 - CORS restringido a `FRONTEND_ORIGIN` (por defecto `http://localhost:5173`).
@@ -81,15 +83,18 @@ envíos) en **MongoDB**.
 | `JWT_SECRET` / `JWT_EXPIRATION_MS` | valor de desarrollo / `3600000` | Firma (≥ 32 bytes) y vigencia del JWT |
 | `FRONTEND_ORIGIN` | `http://localhost:5173` | Origen CORS permitido |
 | `SERVER_PORT` | `8080` | Puerto HTTP |
+| `TZ` | `America/Bogota` (en `docker-compose.yml`) | Zona horaria de las fechas |
+| `VITE_API_URL` | `http://localhost:8080/api/v1` | API que usa la web (se fija al compilarla) |
 | `TAX_RATE` | `0.19` | IVA incluido en los precios del catálogo |
 | `DEMO_PASSWORD` | ver `application.properties` | Contraseña de las cuentas del perfil `demo` |
 
 ## Estado de validación
 
-- [x] Compilación limpia + 112/112 tests (dominio, aislamiento entre roles, autenticación, carga del usuario autenticado, JWT, validación de catálogos, mappers, adaptadores, casos de uso por rol, API REST con MockMvc)
+- [x] Compilación limpia + 115/115 tests (dominio, aislamiento entre roles, autenticación, carga del usuario autenticado, JWT, validación de catálogos, mappers, adaptadores, casos de uso por rol, API REST con MockMvc)
 - [x] Endpoints sobre los adaptadores JPA reales (entidades, mappers y repositorios de MySQL) con H2 en modo MySQL: login → carrito → checkout → pago → factura (`RelationalPersistenceIntegrationTest`)
 - [x] Arranque verificado en modo `memory,demo`: login → endpoint protegido → carrito → checkout → pago → factura → logout → token viejo rechazado (401)
 - [x] Arranque con `docker compose up --build` (MySQL 8 + MongoDB 6 + aplicación) verificado: conexión OK a ambas bases, datos demo sembrados y flujo completo por HTTP (carrito → checkout → pago → envío → entrega → finalización → factura → devolución → reembolso → reingreso de stock) con los datos guardados en MySQL (18 tablas) y el historial en MongoDB (`inventory_movements`, `shipment_tracking`)
+- [x] Web probada en el navegador con los 5 roles (28 opciones de menú, también en tamaño celular): compra completa, entrega fallida, devolución y reembolso, inventario, usuarios y bloqueo entre roles, en modo memoria y con Docker (MySQL + MongoDB)
 
 ## Notas
 

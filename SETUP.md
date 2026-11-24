@@ -7,7 +7,8 @@ Probado en Windows 11 + PowerShell. Los comandos de Maven se ejecutan desde
 
 1. **JDK 17 o superior**: `java -version`.
 2. **Docker Desktop** solo si se va a usar MySQL/MongoDB reales (opciones B y C del paso 3).
-3. Puerto libre para la aplicación (por defecto **8080**). Si está ocupado, usar `SERVER_PORT`.
+3. **Node.js** solo para correr la web sin Docker (probado con Node.js 26): `node -v`.
+4. Puerto libre para la aplicación (por defecto **8080**). Si está ocupado, usar `SERVER_PORT`.
 
 ## 1. Compilar y correr las pruebas
 
@@ -16,7 +17,7 @@ cd nexusmarket\nexusmarketII
 .\mvnw.cmd test
 ```
 
-Resultado esperado: `Tests run: 112, Failures: 0, Errors: 0` y `BUILD SUCCESS`.
+Resultado esperado: `Tests run: 115, Failures: 0, Errors: 0` y `BUILD SUCCESS`.
 Las pruebas **no necesitan bases de datos**: usan el perfil `memory`.
 
 ## 2. Empaquetar
@@ -44,7 +45,7 @@ Los datos se pierden al detener la aplicación.
 Desde la raíz del repositorio:
 
 ```powershell
-docker compose up -d
+docker compose up -d mysql-db mongo-db
 docker ps --format "{{.Names}}|{{.Status}}"
 ```
 
@@ -57,21 +58,35 @@ java -jar target\nexusmarket-0.0.1-SNAPSHOT.jar --spring.profiles.active=demo
 
 Hibernate crea las tablas al arrancar y MongoDB crea las colecciones con el primer documento.
 
-### Opción C — todo en Docker (aplicación + MySQL + MongoDB)
+### Opción C — todo en Docker (web + aplicación + MySQL + MongoDB)
 
-Desde la raíz del repositorio, sin instalar Java ni Maven:
+Desde la raíz del repositorio, sin instalar Java, Maven ni Node:
 
 ```powershell
 docker compose up --build
 ```
 
-Levanta tres contenedores: `nexusmarket-mysql`, `nexusmarket-mongo` y `nexusmarket-app`.
+Levanta cuatro contenedores: `nexusmarket-mysql`, `nexusmarket-mongo`, `nexusmarket-app` y `nexusmarket-web`
+(la web, en `http://localhost:5173`).
 La aplicación espera a que las dos bases de datos estén sanas (`healthcheck`) y arranca con
 el perfil `demo` en `http://127.0.0.1:8080`. Se conecta a ellas por la red interna de Docker
 (`mysql-db:3306` con el usuario `nexusmarket_app`, `mongo-db:27017`). El código fuente se monta
 como volumen y las dependencias de Maven quedan en el volumen `maven_cache`, así que el
 segundo arranque es más rápido. Los archivos compilados del contenedor van en su propio volumen
 (`app_target`), separado de la carpeta `target` que usa VS Code, para que no se pisen. El puerto publicado se cambia con `HOST_SERVER_PORT`.
+
+### Abrir la web
+
+Con la opción C ya está en **`http://localhost:5173`**. Con las opciones A o B, en otra terminal:
+
+```powershell
+cd nexusmarket\nexusmarket-web
+npm.cmd install
+npm.cmd run dev
+```
+
+Se debe abrir como `localhost`: la API rechaza `127.0.0.1:5173` (CORS). Se entra con las cuentas del paso 4;
+cada pestaña tiene su propia sesión, así que se pueden usar dos roles a la vez.
 
 ### Verificar salud
 
@@ -157,6 +172,8 @@ docker compose stop        # o `docker compose down` para borrar los contenedore
 |---|---|---|
 | `Port 8080 was already in use` | Otro proceso ocupa el puerto | `$env:SERVER_PORT="8081"` antes de `java -jar` |
 | `Communications link failure` al arrancar sin perfil `memory` | MySQL apagado | `docker compose up -d`, o arrancar con `--spring.profiles.active=memory,demo` |
+| La web dice "No pudimos conectar con el servidor" | La API está apagada o todavía arranca, o la web se abrió como `127.0.0.1` | Esperar a `Started NexusmarketApplication` y abrir `http://localhost:5173` |
+| `Port 5173 is already in use` | Otra copia de la web está abierta | Cerrarla: la API solo acepta ese puerto |
 | `401` en todas las rutas protegidas | Token ausente, vencido o invalidado por logout / cambio de contraseña | Volver a hacer login |
 | `403 FORBIDDEN` | La ruta pertenece a otro rol, o el recurso es de otro participante | Usar la cuenta del rol correspondiente |
 | `mvnw clean` falla borrando `target` | El servidor Java de VS Code tiene archivos abiertos | Recargar la ventana de VS Code o cerrar la carpeta y repetir |
